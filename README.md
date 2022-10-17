@@ -1,22 +1,18 @@
 <div align='center'>
-<h2>gpi</h2>
+<h2>npm-ideal-tree</h2>
 
-[![NPM version](https://img.shields.io/npm/v/gpi.svg?color=a1b858&label=)](https://www.npmjs.com/package/gpi)
+[![NPM version](https://img.shields.io/npm/v/npm-ideal-tree.svg?color=a1b858&label=)](https://www.npmjs.com/package/npm-ideal-tree)
 
 </div>
 
-Get a specific package information through a version with range selection, the search algorithm comes from `npm/cli`
+...
 
-[Online test platform](https://imtaotao.github.io/gpi/)
+[Online test platform](https://imtaotao.github.io/npm-ideal-tree/)
 
 ### NPM
 
 ```js
-import { gpi } from 'gpi';
 
-gpi('react-dom', '^16.x.x').then(res => {
-  console.log(res);
-})
 ```
 
 
@@ -26,11 +22,9 @@ gpi('react-dom', '^16.x.x').then(res => {
 <!DOCTYPE html>
 <html lang="en">
 <body>
-  <script src="https://unpkg.com/gpi/dist/gpi.umd.js"></script>
+  <script src="https://unpkg.com/npm-ideal-tree/dist/tree.umd.js"></script>
   <script>
-    Gpi.gpi('react-dom', '^16.x.x').then(res => {
-      console.log(res);
-    })
+    
   </script>
 </body>
 </html>
