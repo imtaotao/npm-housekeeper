@@ -2,13 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>npm-ideal-tree</title>
+  <title>npm-package-tree</title>
 </head>
 <body>
 <script src="./dist/tree.umd.js"></script>
-<script src="https://unpkg.com/npm-ideal-tree/dist/tree.umd.js"></script>
+<script src="https://unpkg.com/npm-package-tree/dist/tree.umd.js"></script>
 <script>
-  console.log(NpmIdealTree);
+  new NpmPackageTree.IdealTreeBuilder().build({
+    name: 'project',
+    dependencies: {
+      'react-dom': '*',
+    }
+  }).then(res => {
+    console.log(res);
+  })
 </script>
 </body>
 </html>

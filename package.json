@@ -1,5 +1,5 @@
 {
-  "name": "npm-ideal-tree",
+  "name": "npm-package-tree",
   "version": "0.0.1",
   "description": "Generate a dependency tree",
   "main": "dist/tree.cjs.js",
@@ -21,14 +21,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/imtaotao/npm-ideal-tree.git"
+    "url": "git+https://github.com/imtaotao/npm-package-tree.git"
   },
   "bugs": {
-    "url": "https://github.com/imtaotao/npm-ideal-tree/issues"
+    "url": "https://github.com/imtaotao/npm-package-tree/issues"
   },
   "dependencies": {
     "esm-semver": "^0.0.9",
-    "gpi": "^0.0.1"
+    "gpi": "^0.0.6"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
