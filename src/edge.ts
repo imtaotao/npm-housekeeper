@@ -50,6 +50,10 @@ export class Edge {
     return this.type === "peer" || this.type === "peerOptional";
   }
 
+  get valid() {
+    return !this.error;
+  }
+
   get missing() {
     return this.error === "MISSING";
   }

@@ -5,14 +5,11 @@ export type PackageJson = Omit<PackageData, "dist">;
 
 interface NodeOptions {
   location: string;
-  root: Node | null;
   parent: Node | null;
   pkg: PackageData | PackageJson;
-  dev: boolean;
-  devOptional: boolean;
-  peer: boolean;
-  optional: boolean;
-  legacyPeerDeps: boolean;
+  error?: Error | string;
+  sourceReference?: Node;
+  legacyPeerDeps?: boolean;
 }
 
 export class Node {
@@ -21,25 +18,21 @@ export class Node {
   edgesOut = new Map<string, Edge>(); // 该 node 依赖的其他 node（依赖）
   children = new Map<string, Node>(); // 子 node_modules
   location: string;
-  root: Node | null;
   parent: Node | null = null;
   pkg: PackageData | PackageJson;
-  dev: boolean;
-  devOptional: boolean;
-  peer: boolean;
-  optional: boolean;
   legacyPeerDeps: boolean;
+  sourceReference?: Node;
+  private _root: null | Node = null;
 
   constructor(opts: NodeOptions) {
-    this.pkg = opts.pkg;
     this.location = opts.location;
     this.parent = opts.parent || null;
-    this.root = opts.parent ? null : opts.root || null;
-    this.dev = opts.dev;
-    this.peer = opts.peer;
-    this.optional = opts.optional;
-    this.devOptional = opts.devOptional;
-    this.legacyPeerDeps = opts.legacyPeerDeps;
+    this.legacyPeerDeps = opts.legacyPeerDeps || false;
+    this.sourceReference = opts.sourceReference;
+    this.pkg = opts.sourceReference ? opts.sourceReference.pkg : opts.pkg;
+    if (opts.error) {
+      this.errors.push(opts.error);
+    }
     this.loadDeps();
   }
 
@@ -67,6 +60,14 @@ export class Node {
     return this === this.root;
   }
 
+  get root() {
+    return this._root;
+  }
+
+  set root(n: Node | null) {
+    this._root = n;
+  }
+
   private loadDeps() {
     // 自动安装 peerDependencies
     const pd = this.pkg.peerDependencies;
@@ -88,7 +89,7 @@ export class Node {
     this.loadDepType(dependencies, "prod");
     this.loadDepType(optionalDependencies, "optional");
     // 只有根项目需要安装 devDependencies
-    if (this.isTop) {
+    if (this.isTop && (!this.sourceReference || this.sourceReference.isTop)) {
       this.loadDepType(devDependencies, "dev");
     }
   }
@@ -103,11 +104,20 @@ export class Node {
     }
   }
 
+  setChild(child: Node) {
+    this.children.set(child.name, child);
+    this.edgesOut.get(child.name)?.reload();
+  }
+
   resolve(name: string): Node | null {
     const mine = this.children.get(name);
     if (mine) return mine;
     if (this.parent) return this.parent.resolve(name);
     return null;
+  }
+
+  satisfies(edge: Edge) {
+    return edge.satisfiedBy(this);
   }
 
   addEdgeOut(edge: Edge) {
