@@ -69,7 +69,7 @@ export class Node {
   }
 
   private loadDeps() {
-    // 自动安装 peerDependencies
+    // 是否自动安装 peerDependencies
     const pd = this.pkg.peerDependencies;
     if (pd && typeof pd === "object" && !this.legacyPeerDeps) {
       const pm = this.pkg.peerDependenciesMeta || {};
