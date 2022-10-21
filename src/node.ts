@@ -8,28 +8,27 @@ interface NodeOptions {
   parent: Node | null;
   pkg: PackageData | PackageJson;
   error?: Error | string;
-  sourceReference?: Node;
   legacyPeerDeps?: boolean;
 }
 
+let id = 0;
+
 export class Node {
+  id = id++;
   errors: Array<string | Error> = [];
-  edgesIn = new Set<Edge>(); // 依赖该 node 的其他的 node（同名且版本匹配）
-  edgesOut = new Map<string, Edge>(); // 该 node 依赖的其他 node（依赖）
+  edgesOut = new Map<string, Edge>(); // 该 node 依赖的其他 edge（依赖）
   children = new Map<string, Node>(); // 子 node_modules
   location: string;
   parent: Node | null = null;
   pkg: PackageData | PackageJson;
   legacyPeerDeps: boolean;
-  sourceReference?: Node;
-  private _root: null | Node = null;
+  private selfRoot: null | Node = null;
 
   constructor(opts: NodeOptions) {
+    this.pkg = opts.pkg;
     this.location = opts.location;
     this.parent = opts.parent || null;
     this.legacyPeerDeps = opts.legacyPeerDeps || false;
-    this.sourceReference = opts.sourceReference;
-    this.pkg = opts.sourceReference ? opts.sourceReference.pkg : opts.pkg;
     if (opts.error) {
       this.errors.push(opts.error);
     }
@@ -61,11 +60,11 @@ export class Node {
   }
 
   get root() {
-    return this._root;
+    return this.selfRoot || (this.parent ? this.parent.root : null);
   }
 
   set root(n: Node | null) {
-    this._root = n;
+    this.selfRoot = n;
   }
 
   private loadDeps() {
@@ -89,7 +88,7 @@ export class Node {
     this.loadDepType(dependencies, "prod");
     this.loadDepType(optionalDependencies, "optional");
     // 只有根项目需要安装 devDependencies
-    if (this.isTop && (!this.sourceReference || this.sourceReference.isTop)) {
+    if (this.isTop) {
       this.loadDepType(devDependencies, "dev");
     }
   }
@@ -102,11 +101,6 @@ export class Node {
         new Edge({ from: this, name, spec, accept: ad[name], type });
       }
     }
-  }
-
-  setChild(child: Node) {
-    this.children.set(child.name, child);
-    this.edgesOut.get(child.name)?.reload();
   }
 
   resolve(name: string): Node | null {
@@ -122,9 +116,5 @@ export class Node {
 
   addEdgeOut(edge: Edge) {
     this.edgesOut.set(edge.name, edge);
-  }
-
-  addEdgeIn(edge: Edge) {
-    this.edgesIn.add(edge);
   }
 }

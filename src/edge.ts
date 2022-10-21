@@ -11,14 +11,16 @@ export interface EdgeOptions {
   accept?: string;
 }
 
+let id = 0;
+
 export class Edge {
+  id = id++;
   type: Type;
   to: Node | null;
   from: Node | null;
   name: string;
   spec: string;
   accept?: string;
-  peerConflicted = false;
   private errorTag: string | null = null;
 
   constructor(opts: EdgeOptions) {
@@ -77,33 +79,21 @@ export class Edge {
       node.edgesOut.get(this.name)!.detach();
     }
     node.addEdgeOut(this);
-    this.reload();
+    this.errorTag = this.loadError();
+  }
+
+  setTo(newTo: Node) {
+    if (newTo !== this.to) {
+      this.to = newTo;
+      this.errorTag = this.loadError();
+    }
   }
 
   detach() {
-    if (this.to) {
-      this.to.edgesIn.delete(this);
-    }
     this.from?.edgesOut.delete(this.name);
     this.to = null;
     this.errorTag = "DETACHED";
     this.from = null;
-  }
-
-  reload(hard = false) {
-    const newTo = this.from ? this.from.resolve(this.name) : null;
-    if (newTo !== this.to) {
-      if (this.to) {
-        this.to.edgesIn.delete(this);
-      }
-      this.to = newTo;
-      this.errorTag = this.loadError();
-      if (this.to) {
-        this.to.addEdgeIn(this);
-      }
-    } else if (hard) {
-      this.errorTag = this.loadError();
-    }
   }
 
   satisfiedBy(node: Node) {
