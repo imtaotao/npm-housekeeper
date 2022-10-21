@@ -25,8 +25,9 @@ export class IdealTreeBuilder {
 
   async build(pkg: PackageJson) {
     this.idealNode = this.rootNodeFromPackage(pkg);
+    console.log(this.idealNode);
     await this.buildDepStep(this.idealNode);
-    return new CorpDep(this.idealNode).start();
+    // return new CorpDep(this.idealNode).start();
   }
 
   // 根据 edges 来生成 node
@@ -36,11 +37,9 @@ export class IdealTreeBuilder {
     }
     this.depsSeen.add(node);
     const ls = [...node.edgesOut.values()].map(async (edge) => {
-      console.log(edge);
       const dep = await this.nodeFromSpec(edge.name, edge.spec, node, edge);
-      edge.setTo(dep);
       node.children.set(dep.name, dep);
-      // await this.buildDepStep(dep);
+      await this.buildDepStep(dep);
     });
     await Promise.all(ls);
   }
