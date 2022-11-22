@@ -7,15 +7,28 @@
 <body>
 <script src="./dist/tree.umd.js"></script>
 <script src="https://unpkg.com/npm-package-tree/dist/tree.umd.js"></script>
+<script src="http://127.0.0.1:8080/dist/tree.umd.js"></script>
 <script>
-  new NpmPackageTree.IdealTreeBuilder().build({
-    name: 'project',
-    dependencies: {
-      'vue': '*',
-      // "@vue/cli": "*"
+  NpmPackageTree.getDepsInfo({
+    pkgJson: {
+      name: 'root',
+      projects: [
+        {
+          name: 'project1',
+          dependencies: {
+            'vue': '*',
+          },
+        },
+        {
+          name: 'project2',
+          dependencies: {
+            'react': '*',
+          },
+        },
+      ]
     }
-  }).then(tree => {
-    console.log(tree);
+  }).then(res => {
+    console.log(res.node);
   })
 </script>
 </body>
