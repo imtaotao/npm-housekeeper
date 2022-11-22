@@ -8,7 +8,7 @@ export interface GetDepsOptions {
   registry?: string;
   legacyPeerDeps?: boolean;
   pkgJson: Partial<PackageJson> & {
-    projects: Array<Partial<PackageJson>>;
+    projects?: Array<Partial<PackageJson>>;
   };
 }
 
@@ -17,15 +17,22 @@ export async function getDepsInfo(opts: GetDepsOptions) {
   opts.registry = opts.registry || "https://registry.npmjs.org";
   if (!opts.registry.endsWith("/")) opts.registry += "/";
 
+  const list = [];
   const manager = new Manager({
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
   });
   const rootNode = manager.createRootNode(
     opts.pkgJson as any,
-    opts.pkgJson.projects as any
+    (opts.pkgJson.projects as any) || []
   );
-  await Promise.all(rootNode.projects!.map((node) => node.loadDeps()));
+
+  list.push(rootNode.loadDeps());
+  for (const node of rootNode.projects!) {
+    list.push(node.loadDeps());
+  }
+
+  await Promise.all(list);
 
   return {
     manager,

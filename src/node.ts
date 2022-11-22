@@ -1,10 +1,10 @@
 import type { PackageData } from "gpi";
 import { Manager } from "./manager";
 
-type NodeType = "root" | "project" | "package";
-type EdgeType = "prod" | "dev" | "peer" | "peerOptional" | "optional";
+export type NodeType = "root" | "project" | "package";
+export type EdgeType = "prod" | "dev" | "peer" | "peerOptional" | "optional";
 
-interface NodeOptions {
+export interface NodeOptions {
   type: NodeType;
   manager: Manager;
   pkgJson: PackageData;
@@ -12,7 +12,7 @@ interface NodeOptions {
   projects?: Array<Node>;
 }
 
-interface Edge {
+export interface Edge {
   node: Node;
   type: EdgeType;
   link: boolean;
@@ -99,7 +99,7 @@ export class Node {
     const list = [];
     const ad = this.pkg.acceptDependencies || {};
     for (const [name, wanted] of Object.entries(deps || {})) {
-      if (this.edges[name]) continue;
+      if (!name || this.edges[name]) continue;
       this.edges[name] = Object.create(null) as any; // 占位（如果是 optional 就可能是空对象）
       const node = this.manager.get(name, wanted, this, ad[name]);
 

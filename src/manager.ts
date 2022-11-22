@@ -14,7 +14,7 @@ export class Manager {
   public modules: Record<string, Record<string, Node>> = Object.create(null);
   private manifests = new Map<string, PackageData | Promise<PackageData>>();
 
-  constructor(private opts: ManagerOptions) {}
+  constructor(public opts: ManagerOptions) {}
 
   fetchManifest(name: string, wanted: string) {
     const spec = `${name}@${wanted}`;
@@ -51,11 +51,11 @@ export class Manager {
   }
 
   set(node: Node) {
-    const spec = `${this.opts.registry}${node.pkg.name}`;
+    const spec = `${this.opts.registry}${node.name}`;
     if (!this.modules[spec]) {
       this.modules[spec] = Object.create(null);
     }
-    this.modules[spec][node.pkg.version] = node;
+    this.modules[spec][node.version] = node;
   }
 
   async createNode(name: string, wanted: string) {

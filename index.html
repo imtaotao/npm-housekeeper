@@ -12,6 +12,9 @@
   NpmPackageTree.getDepsInfo({
     pkgJson: {
       name: 'root',
+      dependencies: {
+        '@arco-design/web-react': '*'
+      },
       projects: [
         {
           name: 'project1',
@@ -29,6 +32,8 @@
     }
   }).then(res => {
     console.log(res.node);
+    console.log(res.lockfile.output());
+    console.log(JSON.stringify(res.lockfile.output(), null, 2));
   })
 </script>
 </body>
