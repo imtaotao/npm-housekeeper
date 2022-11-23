@@ -5,14 +5,16 @@
   <title>Housekeeper</title>
 </head>
 <body>
-<script src="https://unpkg.com/npm-housekeeper/dist/housekeeper.umd.js"></script>
+<pre id="view"></pre>
+<!-- <script src="https://unpkg.com/npm-housekeeper/dist/housekeeper.umd.js"></script> -->
 <script src="http://127.0.0.1:8085/dist/housekeeper.umd.js"></script>
 <script>
   Housekeeper.monorepoDeps({
     pkgJson: {
       name: 'root',
       dependencies: {
-        '@arco-design/web-react': '*'
+        '@arco-design/web-react': '*',
+        'create-react-app': "*",
       },
       projects: [
         {
@@ -33,14 +35,10 @@
     console.log(res.node);
     console.log(res.lockfile.output());
     // console.log(JSON.stringify(res.lockfile.output(), null, 2));
-    
-    const data = {};
-    res.manager.each((n, v, node) => {
-      if (node.usedEdges.size > 1) {
-        data[`${n}${v}`] = node;
-      }
-    })
-    console.log(data);
+
+    // const json = res.node.toJson();
+    // view.innerText = JSON.stringify(json, null, 2);
+    // console.log(json);
     window.res = res;
   })
 </script>

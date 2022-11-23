@@ -5,6 +5,8 @@ import type { Manager } from "./manager";
 // 在生成 edge 的 node 时，已经取了复用的，但是可能有时序问题，这里也要判断一次
 export function tryToReplace(manager: Manager, target: Node) {
   const nodes = manager.packages[target.name];
+  if (!nodes) return;
+
   for (const version in nodes) {
     const node = nodes[version];
     if (node === target) continue;

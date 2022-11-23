@@ -80,7 +80,7 @@ export class Manager {
     if (!this.packages[node.name]) {
       this.packages[node.name] = Object.create(null);
     }
-    // tryToReplace(this, node);
+    tryToReplace(this, node);
     this.packages[node.name][node.version] = node;
   }
 
