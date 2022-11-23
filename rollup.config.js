@@ -9,15 +9,15 @@ import { dependencies } from './package.json';
 const outputConfigs = {
   cjs: {
     format: 'cjs',
-    file: path.resolve(__dirname, 'dist/tree.cjs.js'),
+    file: path.resolve(__dirname, 'dist/butler.cjs.js'),
   },
   'esm-bundler': {
     format: 'es',
-    file: path.resolve(__dirname, 'dist/tree.esm-bundler.js'),
+    file: path.resolve(__dirname, 'dist/butler.esm-bundler.js'),
   },
   umd: {
     format: 'umd',
-    file: path.resolve(__dirname, 'dist/tree.umd.js'),
+    file: path.resolve(__dirname, 'dist/butler.umd.js'),
   },
 };
 
