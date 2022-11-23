@@ -9,22 +9,20 @@ interface Deps {
   acceptDependencies?: Record<string, string>;
 }
 
+type ImporterValue = Deps & {
+  specifiers?: Record<string, string>;
+};
+
+type PackageValue = Deps & {
+  version: string;
+  resolved: string;
+};
+
 export interface LockfileData {
-  lockfileVersion: string;
   registry: string;
-  importers: Record<
-    string,
-    Deps & {
-      specifiers?: Record<string, string>;
-    }
-  >;
-  packages: Record<
-    string,
-    Deps & {
-      version: string;
-      resolved: string;
-    }
-  >;
+  lockfileVersion: string;
+  importers: Record<string, ImporterValue>;
+  packages: Record<string, PackageValue>;
 }
 
 export class Lockfile {
@@ -48,44 +46,43 @@ export class Lockfile {
       if (!name) {
         name = targetNode.type === "root" ? "." : `project${this.projectId++}`;
       }
-
-      data.importers[name] = {};
+      const importerValue: ImporterValue = (data.importers[name] = {});
 
       for (const key in targetNode.edges) {
         const { wanted, type, node } = targetNode.edges[key];
         const prop = this.getDepNameByEdgeType(type);
 
-        if (!data.importers[name][prop]) {
-          data.importers[name][prop] = {};
+        if (!importerValue.specifiers) {
+          importerValue.specifiers = {};
         }
-        if (!data.importers[name].specifiers) {
-          data.importers[name].specifiers = {};
+        if (!importerValue[prop]) {
+          importerValue[prop] = {};
         }
-        data.importers[name].specifiers![node.name] = wanted;
-        data.importers[name][prop]![node.name] = node.version;
+        importerValue.specifiers![node.name] = wanted;
+        importerValue[prop]![node.name] = node.version;
       }
     }
   }
 
   private processPackageNodes(data: LockfileData) {
-    for (const key in this.manager.packages) {
-      for (const version in this.manager.packages[key]) {
-        const node = this.manager.packages[key][version];
+    for (const pkgKey in this.manager.packages) {
+      for (const version in this.manager.packages[pkgKey]) {
+        const node = this.manager.packages[pkgKey][version];
         const spec = `${node.name}@${node.version}`;
 
-        data.packages[spec] = {
+        const packageValue: PackageValue = (data.packages[spec] = {
           version: node.version,
           resolved: node.resolved!,
-        };
+        });
 
-        for (const name in node.edges) {
-          const edge = node.edges[name];
+        for (const k in node.edges) {
+          const edge = node.edges[k];
           const prop = this.getDepNameByEdgeType(edge.type);
 
-          if (!data.packages[spec][prop]) {
-            data.packages[spec][prop] = {};
+          if (!packageValue[prop]) {
+            packageValue[prop] = {};
           }
-          data.packages[spec][prop]![edge.node.name] = edge.node.version;
+          packageValue[prop]![edge.name] = edge.node.version;
         }
       }
     }

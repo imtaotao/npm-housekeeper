@@ -16,6 +16,7 @@ export interface Edge {
   node: Node;
   type: EdgeType;
   link: boolean;
+  name: string;
   wanted: string;
 }
 
@@ -28,8 +29,9 @@ export class Node {
   public legacyPeerDeps: boolean;
   public resolved: string | null;
   public projects: Array<Node> | null;
-  public errors: Array<Error | string> = [];
+  public usedEdges = new Set<Edge>();
   public edges: Record<string, Edge> = Object.create(null);
+  public errors: Array<Error | string> = [];
 
   constructor(opts: NodeOptions) {
     this.type = opts.type;
@@ -89,6 +91,7 @@ export class Node {
     edge.node = node;
     edge.type = type;
     edge.wanted = wanted;
+    edge.name = node.name;
     return edge;
   }
 
@@ -105,6 +108,7 @@ export class Node {
 
       if (node) {
         this.edges[name] = this.createEdge(node, wanted, type);
+        node.usedEdges.add(this.edges[name]);
       } else {
         list.push(
           this.manager
@@ -112,6 +116,7 @@ export class Node {
             .then(async (node) => {
               this.manager.set(node);
               this.edges[name] = this.createEdge(node, wanted, type);
+              node.usedEdges.add(this.edges[name]);
               // 子节点也要加载他自己的依赖
               await node.loadDeps();
             })

@@ -12,7 +12,7 @@ Build ideal tree by `package.json`.
 ### NPM
 
 ```js
-
+import { } from 'npm-housekeeper';
 ```
 
 
