@@ -35,8 +35,7 @@ export class Manager {
   }
 
   get(name: string, wanted: string, from: Node, accept?: string) {
-    const spec = `${this.opts.registry}${name}`;
-    const nodes = this.packages[spec];
+    const nodes = this.packages[name];
     if (nodes) {
       // '' 等于 '*'
       if (accept !== undefined) accept = accept || "*";
@@ -51,11 +50,10 @@ export class Manager {
   }
 
   set(node: Node) {
-    const spec = `${this.opts.registry}${node.name}`;
-    if (!this.packages[spec]) {
-      this.packages[spec] = Object.create(null);
+    if (!this.packages[node.name]) {
+      this.packages[node.name] = Object.create(null);
     }
-    this.packages[spec][node.version] = node;
+    this.packages[node.name][node.version] = node;
   }
 
   async createNode(name: string, wanted: string) {
