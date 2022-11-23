@@ -4,7 +4,7 @@ import { Lockfile } from "./lockfile";
 
 export type PackageJson = Omit<PackageData, "dist" | "version">;
 
-export interface GetDepsOptions {
+export interface MonorepoDepsOptions {
   registry?: string;
   legacyPeerDeps?: boolean;
   pkgJson: Partial<PackageJson> & {
@@ -12,7 +12,7 @@ export interface GetDepsOptions {
   };
 }
 
-export async function getDepsInfo(opts: GetDepsOptions) {
+export async function monorepoDeps(opts: MonorepoDepsOptions) {
   opts.legacyPeerDeps = Boolean(opts.legacyPeerDeps);
   opts.registry = opts.registry || "https://registry.npmjs.org";
   if (!opts.registry.endsWith("/")) opts.registry += "/";
@@ -33,6 +33,7 @@ export async function getDepsInfo(opts: GetDepsOptions) {
   }
 
   await Promise.all(list);
+  manager.cropEmptyPackages();
 
   return {
     manager,

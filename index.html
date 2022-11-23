@@ -8,7 +8,7 @@
 <script src="https://unpkg.com/npm-housekeeper/dist/housekeeper.umd.js"></script>
 <script src="http://127.0.0.1:8085/dist/housekeeper.umd.js"></script>
 <script>
-  Housekeeper.getDepsInfo({
+  Housekeeper.monorepoDeps({
     pkgJson: {
       name: 'root',
       dependencies: {
@@ -33,6 +33,15 @@
     console.log(res.node);
     console.log(res.lockfile.output());
     // console.log(JSON.stringify(res.lockfile.output(), null, 2));
+    
+    const data = {};
+    res.manager.each((n, v, node) => {
+      if (node.usedEdges.size > 1) {
+        data[`${n}${v}`] = node;
+      }
+    })
+    console.log(data);
+    window.res = res;
   })
 </script>
 </body>

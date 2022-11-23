@@ -2,9 +2,9 @@ import { gpi } from "gpi";
 import type { PackageData } from "gpi";
 import { Node } from "./node";
 import { depValid } from "./depValid";
-import { tryToReplace } from './replace';
+import { tryToReplace } from "./replace";
 
-export type SpecificPackages = Record<string, Node>;
+type PackageNodes = Record<string, Node>;
 
 export interface ManagerOptions {
   registry: string;
@@ -13,7 +13,7 @@ export interface ManagerOptions {
 
 export class Manager {
   // { react: { '1.0.0': Node } }
-  public packages: Record<string, SpecificPackages> = Object.create(null);
+  public packages: Record<string, PackageNodes> = Object.create(null);
   private manifests = new Map<string, PackageData | Promise<PackageData>>();
 
   constructor(public opts: ManagerOptions) {}
@@ -32,8 +32,33 @@ export class Manager {
     }
   }
 
+  each(
+    callback: (pkgName: string, version: string, node: Node) => void | boolean
+  ) {
+    let needBreak = false;
+    for (const name in this.packages) {
+      for (const version in this.packages[name]) {
+        const node = this.packages[name][version];
+        const res = callback(name, version, node);
+        if (res === false) {
+          needBreak = true;
+          break;
+        }
+      }
+      if (needBreak) break;
+    }
+  }
+
+  cropEmptyPackages() {
+    this.each((name, version, node) => {
+      if (node.usedEdges.size === 0) {
+        delete this.packages[name][version];
+      }
+    });
+  }
+
   // accept: '' => '*'
-  satisfiedBy(node: Node, wanted: string, from: Node, accept?: string) {
+  satisfiedBy(node: Node, wanted: string, from: Node | null, accept?: string) {
     if (accept !== undefined) accept = accept || "*";
     return depValid(node, wanted, accept, from);
   }
@@ -42,9 +67,9 @@ export class Manager {
     const nodes = this.packages[name];
     if (nodes) {
       for (const version in nodes) {
-        const targetNode = nodes[version];
-        if (this.satisfiedBy(targetNode, wanted, from, accept)) {
-          return targetNode;
+        const node = nodes[version];
+        if (this.satisfiedBy(node, wanted, from, accept)) {
+          return node;
         }
       }
     }
@@ -55,7 +80,7 @@ export class Manager {
     if (!this.packages[node.name]) {
       this.packages[node.name] = Object.create(null);
     }
-    tryToReplace(node, this.packages[node.name]);
+    // tryToReplace(this, node);
     this.packages[node.name][node.version] = node;
   }
 

@@ -18,6 +18,7 @@ export interface Edge {
   link: boolean;
   name: string;
   wanted: string;
+  accept?: string;
 }
 
 export class Node {
@@ -85,13 +86,19 @@ export class Node {
     return Promise.all(list);
   }
 
-  private createEdge(node: Node, wanted: string, type: EdgeType) {
+  private createEdge(
+    node: Node,
+    wanted: string,
+    type: EdgeType,
+    accept?: string
+  ) {
     const edge: Edge = Object.create(null);
-    edge.link = true; // 所有的都是 link
     edge.node = node;
     edge.type = type;
+    edge.accept = accept;
     edge.wanted = wanted;
     edge.name = node.name;
+    edge.link = true; // 所有的都是 link，我们是模仿 pnpm 的行为
     return edge;
   }
 
@@ -104,19 +111,20 @@ export class Node {
     for (const [name, wanted] of Object.entries(deps || {})) {
       if (!name || this.edges[name]) continue;
       this.edges[name] = Object.create(null) as any; // 占位（如果是 optional 就可能是空对象）
-      const node = this.manager.get(name, wanted, this, ad[name]);
+      const accept = ad[name];
+      const node = this.manager.get(name, wanted, this, accept);
 
       if (node) {
-        this.edges[name] = this.createEdge(node, wanted, type);
+        this.edges[name] = this.createEdge(node, wanted, type, accept);
         node.usedEdges.add(this.edges[name]);
       } else {
         list.push(
           this.manager
             .createNode(name, wanted)
             .then(async (node) => {
-              this.manager.set(node);
-              this.edges[name] = this.createEdge(node, wanted, type);
+              this.edges[name] = this.createEdge(node, wanted, type, accept);
               node.usedEdges.add(this.edges[name]);
+              this.manager.set(node);
               // 子节点也要加载他自己的依赖
               await node.loadDeps();
             })

@@ -5,7 +5,7 @@ import type { Node } from "./node";
 const valid = (
   child: Node,
   requested: string | VersionInfo,
-  requestor: Node
+  requestor: Node | null
 ) => {
   if (typeof requested === "string") {
     try {
@@ -13,19 +13,23 @@ const valid = (
       requested = getVersionInfo(requested || "*");
     } catch (err: any) {
       // 如果暂时有不支持的规范，直接报错
-      err.dependency = child.name;
-      err.requested = requested;
-      requestor.errors.push(err);
+      if (requestor) {
+        err.dependency = child.name;
+        err.requested = requested;
+        requestor.errors.push(err);
+      }
       return false;
     }
   }
 
   // 如果有手动写的，就可能有这种情况
   if (!requested) {
-    const err: any = new Error("Invalid dependency specifier");
-    err.dependency = child.name;
-    err.requested = requested;
-    requestor.errors.push(err);
+    if (requestor) {
+      const err: any = new Error("Invalid dependency specifier");
+      err.dependency = child.name;
+      err.requested = requested;
+      requestor.errors.push(err);
+    }
     return false;
   }
 
@@ -45,10 +49,12 @@ const valid = (
       break;
   }
 
-  const err: any = new Error("Unsupported dependency type");
-  err.dependency = child.name;
-  err.requested = requested;
-  requestor.errors.push(err);
+  if (requestor) {
+    const err: any = new Error("Unsupported dependency type");
+    err.dependency = child.name;
+    err.requested = requested;
+    requestor.errors.push(err);
+  }
   return false;
 };
 
@@ -56,7 +62,7 @@ export const depValid = (
   child: Node,
   requested: string,
   accept: string | undefined,
-  requestor: Node
+  requestor: Node | null
 ) => {
   return (
     valid(child, requested, requestor) ||
