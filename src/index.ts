@@ -4,23 +4,28 @@ import { Lockfile } from "./lockfile";
 import { LockfileJson, genLockfile } from "./genLock";
 
 export type PackageJson = Omit<PackageData, "dist" | "version">;
+export type RootPackageJson = Partial<PackageJson> & {
+  projects?: Array<Partial<PackageJson>>;
+};
 
-export interface MonorepoDepsOptions {
+export interface InstallOptions {
+  pkgJson: RootPackageJson;
   registry?: string;
   lockfile?: LockfileJson;
   legacyPeerDeps?: boolean;
-  pkgJson: Partial<PackageJson> & {
-    projects?: Array<Partial<PackageJson>>;
-  };
 }
 
-export async function monorepoDeps(opts: MonorepoDepsOptions) {
+export async function install(opts: InstallOptions) {
   opts.legacyPeerDeps = Boolean(opts.legacyPeerDeps);
   opts.registry = opts.registry || "https://registry.npmjs.org";
   if (!opts.registry.endsWith("/")) opts.registry += "/";
 
   const list = [];
-  const lockfile = new Lockfile(opts.lockfile);
+  const lockfile = new Lockfile({
+    data: opts.lockfile,
+    pkgJson: opts.pkgJson,
+    registry: opts.registry,
+  });
 
   const manager = new Manager({
     registry: opts.registry,
