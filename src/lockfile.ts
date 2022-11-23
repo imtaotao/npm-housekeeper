@@ -68,9 +68,9 @@ export class Lockfile {
   }
 
   private processPackageNodes(data: LockfileData) {
-    for (const key in this.manager.modules) {
-      for (const version in this.manager.modules[key]) {
-        const node = this.manager.modules[key][version];
+    for (const key in this.manager.packages) {
+      for (const version in this.manager.packages[key]) {
+        const node = this.manager.packages[key][version];
         const spec = `${node.name}@${node.version}`;
 
         data.packages[spec] = {

@@ -9,15 +9,15 @@ import { dependencies } from './package.json';
 const outputConfigs = {
   cjs: {
     format: 'cjs',
-    file: path.resolve(__dirname, 'dist/butler.cjs.js'),
+    file: path.resolve(__dirname, 'dist/housekeeper.cjs.js'),
   },
   'esm-bundler': {
     format: 'es',
-    file: path.resolve(__dirname, 'dist/butler.esm-bundler.js'),
+    file: path.resolve(__dirname, 'dist/housekeeper.esm-bundler.js'),
   },
   umd: {
     format: 'umd',
-    file: path.resolve(__dirname, 'dist/butler.umd.js'),
+    file: path.resolve(__dirname, 'dist/housekeeper.umd.js'),
   },
 };
 
@@ -32,7 +32,7 @@ function createConfig(format, output) {
   const external = isUmdBuild || !dependencies ? [] : Object.keys(dependencies);
 
   output.externalLiveBindings = true;
-  if (isUmdBuild) output.name = 'Butler';
+  if (isUmdBuild) output.name = 'Housekeeper';
   
   if (format !== 'cjs') {
     nodePlugins = [

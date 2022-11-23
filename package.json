@@ -1,5 +1,5 @@
 {
-  "name": "butler",
+  "name": "npm-housekeeper",
   "version": "0.0.1-beta.1",
   "description": "Generate a dependency tree",
   "main": "dist/tree.cjs.js",
@@ -14,7 +14,7 @@
   "keywords": [
     "npm",
     "tree",
-    "butler"
+    "housekeeper"
   ],
   "license": "MIT",
   "publishConfig": {
@@ -22,10 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/imtaotao/butler.git"
+    "url": "git+https://github.com/imtaotao/npm-housekeeper.git"
   },
   "bugs": {
-    "url": "https://github.com/imtaotao/butler/issues"
+    "url": "https://github.com/imtaotao/npm-housekeeper/issues"
   },
   "dependencies": {
     "esm-semver": "^0.0.9",

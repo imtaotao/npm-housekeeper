@@ -11,7 +11,7 @@ interface ManagerOptions {
 
 export class Manager {
   // { react: { '1.0.0': Node } }
-  public modules: Record<string, Record<string, Node>> = Object.create(null);
+  public packages: Record<string, Record<string, Node>> = Object.create(null);
   private manifests = new Map<string, PackageData | Promise<PackageData>>();
 
   constructor(public opts: ManagerOptions) {}
@@ -36,7 +36,7 @@ export class Manager {
 
   get(name: string, wanted: string, from: Node, accept?: string) {
     const spec = `${this.opts.registry}${name}`;
-    const nodes = this.modules[spec];
+    const nodes = this.packages[spec];
     if (nodes) {
       // '' 等于 '*'
       if (accept !== undefined) accept = accept || "*";
@@ -52,10 +52,10 @@ export class Manager {
 
   set(node: Node) {
     const spec = `${this.opts.registry}${node.name}`;
-    if (!this.modules[spec]) {
-      this.modules[spec] = Object.create(null);
+    if (!this.packages[spec]) {
+      this.packages[spec] = Object.create(null);
     }
-    this.modules[spec][node.version] = node;
+    this.packages[spec][node.version] = node;
   }
 
   async createNode(name: string, wanted: string) {
