@@ -1,13 +1,13 @@
 <div align='center'>
-<h2>npm-package-tree</h2>
+<h2>butler</h2>
 
-[![NPM version](https://img.shields.io/npm/v/npm-package-tree.svg?color=a1b858&label=)](https://www.npmjs.com/package/npm-package-tree)
+[![NPM version](https://img.shields.io/npm/v/butler.svg?color=a1b858&label=)](https://www.npmjs.com/package/butler)
 
 </div>
 
 Build ideal tree by `package.json`.
 
-[Online test platform](https://imtaotao.github.io/npm-package-tree/)
+[Online test platform](https://imtaotao.github.io/butler/)
 
 ### NPM
 
@@ -22,7 +22,7 @@ Build ideal tree by `package.json`.
 <!DOCTYPE html>
 <html lang="en">
 <body>
-  <script src="https://unpkg.com/npm-package-tree/dist/tree.umd.js"></script>
+  <script src="https://unpkg.com/butler/dist/tree.umd.js"></script>
   <script>
     
   </script>

@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>npm-package-tree</title>
+  <title>Butler</title>
 </head>
 <body>
-<script src="./dist/tree.umd.js"></script>
-<script src="https://unpkg.com/npm-package-tree/dist/tree.umd.js"></script>
+<script src="https://unpkg.com/butler/dist/tree.umd.js"></script>
 <script src="http://127.0.0.1:8080/dist/tree.umd.js"></script>
 <script>
-  NpmPackageTree.getDepsInfo({
+  Butler.getDepsInfo({
     pkgJson: {
       name: 'root',
       dependencies: {

@@ -1,6 +1,6 @@
 {
-  "name": "npm-package-tree",
-  "version": "0.0.1",
+  "name": "butler",
+  "version": "0.0.1-beta.1",
   "description": "Generate a dependency tree",
   "main": "dist/tree.cjs.js",
   "module": "dist/tree.esm-bundler.js",
@@ -13,7 +13,8 @@
   "author": "imtaotao",
   "keywords": [
     "npm",
-    "tree"
+    "tree",
+    "butler"
   ],
   "license": "MIT",
   "publishConfig": {
@@ -21,10 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/imtaotao/npm-package-tree.git"
+    "url": "git+https://github.com/imtaotao/butler.git"
   },
   "bugs": {
-    "url": "https://github.com/imtaotao/npm-package-tree/issues"
+    "url": "https://github.com/imtaotao/butler/issues"
   },
   "dependencies": {
     "esm-semver": "^0.0.9",
