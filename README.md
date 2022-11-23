@@ -12,7 +12,31 @@ Build ideal tree by `package.json`.
 ### NPM
 
 ```js
-import { } from 'npm-housekeeper';
+import { install } from 'npm-housekeeper';
+
+install({
+  pkgJson: {
+    dependencies: {
+      'create-react-app': "*",
+      '@arco-design/web-react': '*',
+    },
+    projects: {
+      p1: {
+        dependencies: {
+          'vue': '*',
+        },
+      },
+      p2: {
+        dependencies: {
+          'react': '*',
+        },
+      },
+    },
+  }
+}).then(apis => {
+  console.log(apis.node);
+  console.log(apis.lockfile());
+})
 ```
 
 
@@ -24,7 +48,8 @@ import { } from 'npm-housekeeper';
 <body>
   <script src="https://unpkg.com/butler/dist/npm-housekeeper.umd.js"></script>
   <script>
-    
+    const { install } = window.Housekeeper;
+    // ...
   </script>
 </body>
 </html>
