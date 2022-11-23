@@ -2,16 +2,18 @@ import { gpi } from "gpi";
 import type { PackageData } from "gpi";
 import { Node } from "./node";
 import { depValid } from "./depValid";
-import type { PackageJson } from "./index";
+import { tryToReplace } from './replace';
 
-interface ManagerOptions {
+export type SpecificPackages = Record<string, Node>;
+
+export interface ManagerOptions {
   registry: string;
   legacyPeerDeps: boolean;
 }
 
 export class Manager {
   // { react: { '1.0.0': Node } }
-  public packages: Record<string, Record<string, Node>> = Object.create(null);
+  public packages: Record<string, SpecificPackages> = Object.create(null);
   private manifests = new Map<string, PackageData | Promise<PackageData>>();
 
   constructor(public opts: ManagerOptions) {}
@@ -30,15 +32,15 @@ export class Manager {
     }
   }
 
+  // accept: '' => '*'
   satisfiedBy(node: Node, wanted: string, from: Node, accept?: string) {
+    if (accept !== undefined) accept = accept || "*";
     return depValid(node, wanted, accept, from);
   }
 
   get(name: string, wanted: string, from: Node, accept?: string) {
     const nodes = this.packages[name];
     if (nodes) {
-      // '' 等于 '*'
-      if (accept !== undefined) accept = accept || "*";
       for (const version in nodes) {
         const targetNode = nodes[version];
         if (this.satisfiedBy(targetNode, wanted, from, accept)) {
@@ -53,6 +55,7 @@ export class Manager {
     if (!this.packages[node.name]) {
       this.packages[node.name] = Object.create(null);
     }
+    tryToReplace(node, this.packages[node.name]);
     this.packages[node.name][node.version] = node;
   }
 
