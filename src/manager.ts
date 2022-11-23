@@ -1,8 +1,7 @@
-import { gpi } from "gpi";
-import type { PackageData } from "gpi";
-import { Node } from "./node";
+import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
 import { tryToReplace } from "./replace";
+import { Node, RootPkgJson, ProjectPkgJson } from "./node";
 
 type PackageNodes = Record<string, Node>;
 
@@ -91,25 +90,35 @@ export class Manager {
       manager: this,
       type: "package",
       legacyPeerDeps: this.opts.legacyPeerDeps,
+      resolved: (pkgJson as PackageData).dist.tarball,
     });
   }
 
-  createProjectNode(pkgJson: PackageData) {
+  createProjectNode(pkgJson: ProjectPkgJson) {
     return new Node({
-      pkgJson,
+      resolved: "",
       manager: this,
       type: "project",
+      pkgJson: pkgJson as any,
       legacyPeerDeps: this.opts.legacyPeerDeps,
     });
   }
 
-  createRootNode(pkgJson: PackageData, projects: Array<PackageData>) {
+  createRootNode(
+    pkgJson: RootPkgJson,
+    projectJsons: Record<string, ProjectPkgJson>
+  ) {
+    const projects = Object.create(null);
+    for (const key in projectJsons) {
+      projects[key] = this.createProjectNode(projectJsons[key]);
+    }
     return new Node({
-      pkgJson,
+      projects,
+      resolved: "",
       manager: this,
       type: "root",
+      pkgJson: pkgJson as any,
       legacyPeerDeps: this.opts.legacyPeerDeps,
-      projects: projects.map((json) => this.createProjectNode(json)),
     });
   }
 }

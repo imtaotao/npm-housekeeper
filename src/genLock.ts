@@ -1,105 +1,105 @@
-import { Node, EdgeType } from "./node";
+import { Manager } from "./manager";
+import { Node, EdgeType, NodeDeps, NodePkgJson } from "./node";
 
-interface Deps {
-  dependencies?: Record<string, string>;
-  devDependencies?: Record<string, string>;
-  peerDependencies?: Record<string, string>;
-  optionalDependencies?: Record<string, string>;
-  acceptDependencies?: Record<string, string>;
+interface ImporterValue extends NodeDeps {
+  specifiers?: Record<string, string>;
 }
 
-type ImporterValue = Deps & {
-  specifiers?: Record<string, string>;
-};
-
-type PackageValue = Deps & {
-  version: string;
+interface PackageValue extends NodeDeps {
   resolved: string;
-};
+}
 
 export interface LockfileJson {
   registry: string;
+  legacyPeerDeps: boolean;
   lockfileVersion: string;
   importers: Record<string, ImporterValue>;
-  packages: Record<string, PackageValue>;
+  packages: Record<string, NodePkgJson>;
 }
 
 export const lockfileVersion = "1";
 
 export function genLockfile(rootNode: Node) {
-  let projectId = 1;
   const { manager } = rootNode;
+  const json: LockfileJson = Object.create(null);
 
-  const data: LockfileJson = {
-    lockfileVersion,
-    registry: manager.opts.registry,
-    importers: Object.create(null),
-    packages: Object.create(null),
-  };
+  json.lockfileVersion = lockfileVersion;
+  json.registry = manager.opts.registry;
+  json.legacyPeerDeps = rootNode.legacyPeerDeps;
+  json.importers = Object.create(null);
+  json.packages = Object.create(null);
 
-  const getDepNameByEdgeType = (type: EdgeType) => {
-    if (type === "prod") return "dependencies";
-    if (type === "dev") return "devDependencies";
-    if (type === "peer") return "peerDependencies";
-    if (type === "optional" || type === "peerOptional") {
-      return "optionalDependencies";
+  // 根目录的名字为 `.`
+  processTopNode(".", rootNode, json);
+  if (rootNode.projects) {
+    for (const projectName in rootNode.projects) {
+      processTopNode(projectName, rootNode.projects[projectName], json);
     }
-    return "dependencies";
-  };
+  }
+  processPackageNodes(manager, json);
+  return json;
+}
 
-  const processPackageNodes = (data: LockfileJson) => {
-    for (const pkgKey in manager.packages) {
-      for (const version in manager.packages[pkgKey]) {
-        const node = manager.packages[pkgKey][version];
-        const spec = `${node.name}@${node.version}`;
+const getDepNameByEdgeType = (type: EdgeType) => {
+  if (type === "prod") return "dependencies";
+  if (type === "dev") return "devDependencies";
+  if (type === "peer") return "peerDependencies";
+  if (type === "optional") return "optionalDependencies";
+  if (type === "peerOptional") return "peerDependenciesMeta";
+  throw new TypeError(`Invalid edge type "${type}"`);
+};
 
-        const packageValue: PackageValue = (data.packages[spec] = {
-          version: node.version,
-          resolved: node.resolved!,
-        });
+const processTopNode = (name: string, targetNode: Node, json: LockfileJson) => {
+  if (targetNode.isTop()) {
+    const importerValue = (json.importers[name] = Object.create(null));
 
-        for (const k in node.edges) {
-          const edge = node.edges[k];
-          const prop = getDepNameByEdgeType(edge.type);
-
-          if (!packageValue[prop]) {
-            packageValue[prop] = {};
-          }
-          packageValue[prop]![edge.name] = edge.node.version;
-        }
+    for (const key in targetNode.edges) {
+      const { node, type, name, wanted } = targetNode.edges[key];
+      const prop = getDepNameByEdgeType(type);
+      // 依赖
+      if (prop === "peerDependenciesMeta") {
+        let peerMeta = importerValue[prop];
+        if (!peerMeta) peerMeta = importerValue[prop] = Object.create(null);
+        if (!peerMeta![name]) peerMeta![name] = Object.create(null);
+        peerMeta![name].optional = true;
+      } else {
+        if (!importerValue[prop]) importerValue[prop] = Object.create(null);
+        importerValue[prop]![name] = node.version;
       }
+      // 范围选择的依赖版本
+      if (!importerValue.specifiers)
+        importerValue.specifiers = Object.create(null);
+      importerValue.specifiers![name] = wanted;
     }
-  };
+  }
+};
 
-  const processTopNode = (data: LockfileJson, targetNode: Node) => {
-    if (targetNode.isTop()) {
-      let name = targetNode.name;
-      if (!name) {
-        name = targetNode.type === "root" ? "." : `project${projectId++}`;
-      }
-      const importerValue: ImporterValue = (data.importers[name] = {});
+const processPackageNodes = (manager: Manager, json: LockfileJson) => {
+  for (const pkgKey in manager.packages) {
+    for (const version in manager.packages[pkgKey]) {
+      const targetNode = manager.packages[pkgKey][version];
+      const spec = `${targetNode.name}@${targetNode.version}`;
+
+      // 包的具体版本和下载地址
+      const packageValue = (json.packages[spec] = Object.create(null));
+      packageValue.name = targetNode.name;
+      packageValue.version = targetNode.version;
+      packageValue.resolved = targetNode.resolved;
 
       for (const key in targetNode.edges) {
-        const { wanted, type, node } = targetNode.edges[key];
+        const { node, type, name } = targetNode.edges[key];
         const prop = getDepNameByEdgeType(type);
-
-        if (!importerValue.specifiers) {
-          importerValue.specifiers = {};
+        // 依赖
+        if (prop === "peerDependenciesMeta") {
+          let peerMeta = packageValue[prop];
+          if (!peerMeta) peerMeta = packageValue[prop] = Object.create(null);
+          if (!peerMeta![name]) peerMeta![name] = Object.create(null);
+          peerMeta![name].optional = true;
+        } else {
+          if (!packageValue[prop]) packageValue[prop] = Object.create(null);
+          packageValue[prop]![name] = node.version;
         }
-        if (!importerValue[prop]) {
-          importerValue[prop] = {};
-        }
-        importerValue.specifiers![node.name] = wanted;
-        importerValue[prop]![node.name] = node.version;
       }
     }
-  };
-
-  processPackageNodes(data);
-  processTopNode(data, rootNode);
-  for (const projectNode of rootNode.projects!) {
-    processTopNode(data, projectNode);
   }
-
-  return data;
-}
+};

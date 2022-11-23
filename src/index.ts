@@ -1,15 +1,10 @@
-import type { PackageData } from "gpi";
 import { Manager } from "./manager";
 import { Lockfile } from "./lockfile";
 import { LockfileJson, genLockfile } from "./genLock";
-
-export type PackageJson = Omit<PackageData, "dist" | "version">;
-export type RootPackageJson = Partial<PackageJson> & {
-  projects?: Array<Partial<PackageJson>>;
-};
+import type { RootPkgJson } from "./node";
 
 export interface InstallOptions {
-  pkgJson: RootPackageJson;
+  pkgJson: RootPkgJson;
   registry?: string;
   lockfile?: LockfileJson;
   legacyPeerDeps?: boolean;
@@ -22,9 +17,10 @@ export async function install(opts: InstallOptions) {
 
   const list = [];
   const lockfile = new Lockfile({
-    data: opts.lockfile,
+    json: opts.lockfile,
     pkgJson: opts.pkgJson,
     registry: opts.registry,
+    legacyPeerDeps: opts.legacyPeerDeps,
   });
 
   const manager = new Manager({
@@ -33,21 +29,22 @@ export async function install(opts: InstallOptions) {
   });
 
   const rootNode = manager.createRootNode(
-    opts.pkgJson as any,
-    (opts.pkgJson.projects as any) || []
+    opts.pkgJson,
+    opts.pkgJson.projects || {}
   );
 
   list.push(rootNode.loadDeps());
-  for (const node of rootNode.projects!) {
-    list.push(node.loadDeps());
+  if (rootNode.projects) {
+    for (const key in rootNode.projects) {
+      list.push(rootNode.projects[key].loadDeps());
+    }
   }
-
   await Promise.all(list);
   manager.cropEmptyPackages();
 
   return {
     manager,
     node: rootNode,
-    genLockfile: () => genLockfile(rootNode),
+    lockfile: () => genLockfile(rootNode),
   };
 }

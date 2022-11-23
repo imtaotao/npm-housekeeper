@@ -1,16 +1,32 @@
-import type { PackageData } from "gpi";
 import { Manager } from "./manager";
 
 export type NodeType = "root" | "project" | "package";
 export type EdgeType = "prod" | "dev" | "peer" | "peerOptional" | "optional";
 
-export interface NodeOptions {
-  type: NodeType;
-  manager: Manager;
-  pkgJson: PackageData;
-  legacyPeerDeps: boolean;
-  projects?: Array<Node>;
+export interface NodeDeps {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  acceptDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+  peerDependenciesMeta?: Record<
+    string,
+    {
+      optional: boolean;
+    }
+  >;
 }
+
+export interface NodePkgJson extends NodeDeps {
+  name: string;
+  version: string;
+}
+
+export interface RootPkgJson extends NodeDeps {
+  projects?: Record<string, ProjectPkgJson>;
+}
+
+export interface ProjectPkgJson extends NodeDeps {}
 
 export interface Edge {
   node: Node;
@@ -21,28 +37,37 @@ export interface Edge {
   accept?: string;
 }
 
+export interface NodeOptions {
+  type: NodeType;
+  manager: Manager;
+  resolved: string;
+  pkgJson: NodePkgJson;
+  legacyPeerDeps: boolean;
+  projects?: Record<string, Node>;
+}
+
 export class Node {
   public name: string;
   public type: NodeType;
+  public pkg: NodePkgJson;
   public version: string;
-  public pkg: PackageData;
   public manager: Manager;
+  public resolved: string;
   public legacyPeerDeps: boolean;
-  public resolved: string | null;
-  public projects: Array<Node> | null;
   public usedEdges = new Set<Edge>();
-  public edges: Record<string, Edge> = Object.create(null);
   public errors: Array<Error | string> = [];
+  public projects: Record<string, Node> | null;
+  public edges: Record<string, Edge> = Object.create(null);
 
   constructor(opts: NodeOptions) {
     this.type = opts.type;
     this.pkg = opts.pkgJson;
     this.manager = opts.manager;
     this.name = opts.pkgJson.name;
+    this.resolved = opts.resolved;
     this.version = opts.pkgJson.version;
     this.projects = opts.projects || null;
     this.legacyPeerDeps = opts.legacyPeerDeps;
-    this.resolved = opts.pkgJson.dist?.tarball || null;
   }
 
   isOptionalEdge(type: EdgeType) {
@@ -61,6 +86,7 @@ export class Node {
     const list = [];
     // 是否自动安装 peerDependencies
     const pd = this.pkg.peerDependencies;
+
     if (pd && typeof pd === "object" && !this.legacyPeerDeps) {
       const pm = this.pkg.peerDependenciesMeta || {};
       const peerDependencies: Record<string, string> = {};

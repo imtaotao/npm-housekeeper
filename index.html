@@ -13,29 +13,27 @@
     pkgJson: {
       name: 'root',
       dependencies: {
-        '@arco-design/web-react': '*',
         'create-react-app': "*",
+        '@arco-design/web-react': '*',
       },
-      projects: [
-        {
-          name: 'project1',
+      projects: {
+        project1: {
           dependencies: {
             'vue': '*',
           },
         },
-        {
-          name: 'project2',
+        project2: {
           dependencies: {
             'react': '*',
           },
         },
-      ]
+      },
     }
-  }).then(res => {
-    console.log(res.node);
-    console.log(res.genLockfile());
-    // console.log(JSON.stringify(res.lockfile.output(), null, 2));
-    window.res = res;
+  }).then(apis => {
+    console.log(apis.node);
+    console.log(apis.lockfile());
+    console.log(JSON.stringify(apis.lockfile(), null, 2));
+    window.apis = apis;
   })
 </script>
 </body>
