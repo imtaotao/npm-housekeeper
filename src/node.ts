@@ -17,7 +17,6 @@ export interface Edge {
   type: EdgeType;
   link: boolean;
   name: string;
-  path: string;
   wanted: string;
   accept?: string;
 }
@@ -57,18 +56,6 @@ export class Node {
   hasError() {
     return this.errors.length > 0;
   }
-
-  // toJson() {
-  //   const children = Object.create(null);
-  //   children.version = this.version;
-  //   for (const key in this.edges) {
-  //     if (!children.nodeModules) {
-  //       children.nodeModules = Object.create(null);
-  //     }
-  //     children.nodeModules[key] = this.edges[key].node.toJson();
-  //   }
-  //   return children;
-  // }
 
   loadDeps() {
     const list = [];

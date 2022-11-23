@@ -1,11 +1,13 @@
 import type { PackageData } from "gpi";
 import { Manager } from "./manager";
 import { Lockfile } from "./lockfile";
+import { LockfileJson, genLockfile } from "./genLock";
 
 export type PackageJson = Omit<PackageData, "dist" | "version">;
 
 export interface MonorepoDepsOptions {
   registry?: string;
+  lockfile?: LockfileJson;
   legacyPeerDeps?: boolean;
   pkgJson: Partial<PackageJson> & {
     projects?: Array<Partial<PackageJson>>;
@@ -18,10 +20,13 @@ export async function monorepoDeps(opts: MonorepoDepsOptions) {
   if (!opts.registry.endsWith("/")) opts.registry += "/";
 
   const list = [];
+  const lockfile = new Lockfile(opts.lockfile);
+
   const manager = new Manager({
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
   });
+
   const rootNode = manager.createRootNode(
     opts.pkgJson as any,
     (opts.pkgJson.projects as any) || []
@@ -38,6 +43,6 @@ export async function monorepoDeps(opts: MonorepoDepsOptions) {
   return {
     manager,
     node: rootNode,
-    lockfile: new Lockfile(rootNode, manager),
+    genLockfile: () => genLockfile(rootNode),
   };
 }
