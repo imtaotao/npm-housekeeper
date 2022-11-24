@@ -60,12 +60,12 @@ export class Node {
   public edges: Record<string, Edge> = Object.create(null);
 
   constructor(opts: NodeOptions) {
-    this.type = opts.type;
     this.pkg = opts.pkgJson;
-    this.manager = opts.manager;
     this.name = opts.pkgJson.name;
-    this.resolved = opts.resolved;
     this.version = opts.pkgJson.version;
+    this.type = opts.type;
+    this.manager = opts.manager;
+    this.resolved = opts.resolved;
     this.workspace = opts.workspace || null;
     this.legacyPeerDeps = opts.legacyPeerDeps;
   }
@@ -82,15 +82,22 @@ export class Node {
     return this.errors.length > 0;
   }
 
-  add(name: string, version: string, edgeType: "prod" | "dev" | "peer") {
+  add(
+    name: string,
+    version: string,
+    edgeType: "prod" | "dev" | "peer" = "prod"
+  ) {
     if (!this.isTop()) {
       throw new Error("Only add dependencies to the top node");
+    }
+    if (edgeType !== "prod" && edgeType !== "dev" && edgeType !== "peer") {
+      throw new TypeError(`Invalid dependency type "${edgeType}"`);
     }
     return this.loadSingleDepType(name, version, edgeType);
   }
 
   loadDeps() {
-    const list = [];
+    const ls = [];
     const {
       dependencies,
       devDependencies,
@@ -111,19 +118,19 @@ export class Node {
           peerDependencies[name] = dep;
         }
       }
-      list.push(this.loadDepType(peerDependencies, "peer"));
-      list.push(this.loadDepType(peerOptional, "peerOptional"));
+      ls.push(this.loadDepType(peerDependencies, "peer"));
+      ls.push(this.loadDepType(peerOptional, "peerOptional"));
     }
 
     // 安装其他的依赖
-    list.push(this.loadDepType(dependencies, "prod"));
-    list.push(this.loadDepType(optionalDependencies, "optional"));
+    ls.push(this.loadDepType(dependencies, "prod"));
+    ls.push(this.loadDepType(optionalDependencies, "optional"));
     // 只有项目需要安装 devDependencies
     if (this.isTop()) {
-      list.push(this.loadDepType(devDependencies, "dev"));
+      ls.push(this.loadDepType(devDependencies, "dev"));
     }
 
-    return Promise.all(list);
+    return Promise.all(ls);
   }
 
   private loadDepType(
@@ -131,12 +138,12 @@ export class Node {
     edgeType: EdgeType
   ) {
     if (!deps) return;
-    const list = [];
+    const ls = [];
     for (const [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
-      list.push(this.loadSingleDepType(name, wanted, edgeType));
+      ls.push(this.loadSingleDepType(name, wanted, edgeType));
     }
-    return Promise.all(list);
+    return Promise.all(ls);
   }
 
   // 这会强制更新 edge节点

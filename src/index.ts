@@ -15,41 +15,33 @@ export async function install(opts: InstallOptions) {
   opts.registry = opts.registry || "https://registry.npmjs.org";
   if (!opts.registry.endsWith("/")) opts.registry += "/";
 
-  const list = [];
-
-  // @ts-ignore
-  const lockfile = new Lockfile({
+  const lockfile: Lockfile = new Lockfile({
     json: opts.lockData,
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
-    rootNodeGetter: () => rootNode,
+    rootNodeGetter: () => node,
   });
 
-  // @ts-ignore
   const manager = new Manager({
     lockfile,
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
   });
 
-  // @ts-ignore
-  const rootNode = manager.createRootNode(
+  const node = manager.createRootNode(
     opts.pkgJson,
     opts.pkgJson.workspace || {}
   );
 
-  list.push(rootNode.loadDeps());
-  if (rootNode.workspace) {
-    for (const key in rootNode.workspace) {
-      list.push(rootNode.workspace[key].loadDeps());
+  const ls = [];
+  ls.push(node.loadDeps());
+  if (node.workspace) {
+    for (const key in node.workspace) {
+      ls.push(node.workspace[key].loadDeps());
     }
   }
-  await Promise.all(list);
+  await Promise.all(ls);
   cropEmptyPkg(manager);
 
-  return {
-    node: rootNode as Node,
-    manager: manager as Manager,
-    lockfile: lockfile as Lockfile,
-  };
+  return { node, manager, lockfile };
 }

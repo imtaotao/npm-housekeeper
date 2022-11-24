@@ -1,5 +1,6 @@
 import type { Node } from "./node";
 import type { Manager } from "./manager";
+import { isEmptyObject } from "./utils";
 
 const cache = new WeakMap<Node, boolean>();
 
@@ -29,9 +30,17 @@ const isEmptyNode = (node: Node) => {
 };
 
 export function cropEmptyPkg(manager: Manager) {
-  manager.each((name, version, node) => {
-    if (isEmptyNode(node)) {
-      delete manager.packages[name][version];
+  for (const name in manager.packages) {
+    const pkgs = manager.packages[name];
+
+    for (const version in pkgs) {
+      const node = pkgs[version];
+      if (isEmptyNode(node)) {
+        delete manager.packages[name][version];
+      }
     }
-  });
+    if (isEmptyObject(pkgs)) {
+      delete manager.packages[name];
+    }
+  }
 }

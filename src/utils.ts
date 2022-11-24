@@ -1,6 +1,11 @@
 import type { EdgeType } from "./node";
 
-export const getDepNameByEdgeType = (edgeType: EdgeType, isGet: boolean) => {
+export const isEmptyObject = (obj: Record<string, any>) => {
+  for (const k in obj) return false;
+  return true;
+};
+
+export const getDepPropByEdgeType = (edgeType: EdgeType, isGet: boolean) => {
   if (edgeType === "prod") return "dependencies";
   if (edgeType === "dev") return "devDependencies";
   if (edgeType === "optional") return "optionalDependencies";

@@ -1,5 +1,5 @@
 import * as semver from "esm-semver";
-import { getDepNameByEdgeType } from "./utils";
+import { getDepPropByEdgeType } from "./utils";
 import type { Manager } from "./manager";
 import type { Node, EdgeType, NodeDeps } from "./node";
 
@@ -70,7 +70,7 @@ export class Lockfile {
 
       for (const key in targetNode.edges) {
         const { node, type, name, wanted } = targetNode.edges[key];
-        const prop = getDepNameByEdgeType(type, false);
+        const prop = getDepPropByEdgeType(type, false);
         // 依赖
         if (prop === "peerDependenciesMeta") {
           let peerMeta = importerValue[prop];
@@ -105,7 +105,7 @@ export class Lockfile {
 
       for (const key in targetNode.edges) {
         const { node, type, name } = targetNode.edges[key];
-        const prop = getDepNameByEdgeType(type, false);
+        const prop = getDepPropByEdgeType(type, false);
         // 保存依赖版本
         if (prop === "peerDependenciesMeta") {
           let peerMeta = packageValue[prop];
@@ -142,6 +142,11 @@ export class Lockfile {
     return json;
   }
 
+  // TODO: 对比 lockfile 发生的变化
+  diff(oldJson: LockfileJson, newJson: LockfileJson) {
+    // ...
+  }
+
   tryGetNodeManifest(name: string, version: string) {
     if (!this.json) return null;
     if (!this.json.packages[name]) return null;
@@ -164,8 +169,8 @@ export class Lockfile {
     if (oldWanted) {
       try {
         if (oldWanted === wanted || semver.eq(oldWanted, wanted)) {
-          const lockDep = lockInfo[getDepNameByEdgeType(edgeType, true)];
-          // 如果新的包在 dependencies, 而 lock 文件中在 DevDependencies 中，现在的算法是不匹配
+          const lockDep = lockInfo[getDepPropByEdgeType(edgeType, true)];
+          // 如果新的包在 dependencies 中, 而 lock 文件中在 DevDependencies 中，现在的算法是不要匹配上
           if (!lockDep) return null;
           return (lockDep[name] as string) || null;
         }
