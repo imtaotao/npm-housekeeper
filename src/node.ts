@@ -19,11 +19,12 @@ export interface NodePkgJson extends NodeDeps {
 
 export interface ProjectPkgJson extends NodeDeps {
   name?: string;
+  version?: string;
 }
 
 export interface RootPkgJson extends NodeDeps {
   name?: string;
-  projects?: Record<string, ProjectPkgJson>;
+  workspace?: Record<string, ProjectPkgJson>;
 }
 
 export interface Edge {
@@ -42,7 +43,7 @@ export interface NodeOptions {
   manager: Manager;
   pkgJson: NodePkgJson;
   legacyPeerDeps: boolean;
-  projects?: Record<string, Node>;
+  workspace?: Record<string, Node>;
 }
 
 export class Node {
@@ -55,7 +56,7 @@ export class Node {
   public legacyPeerDeps: boolean;
   public usedEdges = new Set<Edge>();
   public errors: Array<Error | string> = [];
-  public projects: Record<string, Node> | null;
+  public workspace: Record<string, Node> | null;
   public edges: Record<string, Edge> = Object.create(null);
 
   constructor(opts: NodeOptions) {
@@ -65,7 +66,7 @@ export class Node {
     this.name = opts.pkgJson.name;
     this.resolved = opts.resolved;
     this.version = opts.pkgJson.version;
-    this.projects = opts.projects || null;
+    this.workspace = opts.workspace || null;
     this.legacyPeerDeps = opts.legacyPeerDeps;
   }
 

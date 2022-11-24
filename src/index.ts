@@ -35,13 +35,13 @@ export async function install(opts: InstallOptions) {
   // @ts-ignore
   const rootNode = manager.createRootNode(
     opts.pkgJson,
-    opts.pkgJson.projects || {}
+    opts.pkgJson.workspace || {}
   );
 
   list.push(rootNode.loadDeps());
-  if (rootNode.projects) {
-    for (const key in rootNode.projects) {
-      list.push(rootNode.projects[key].loadDeps());
+  if (rootNode.workspace) {
+    for (const key in rootNode.workspace) {
+      list.push(rootNode.workspace[key].loadDeps());
     }
   }
   await Promise.all(list);

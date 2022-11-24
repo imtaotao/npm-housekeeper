@@ -115,20 +115,20 @@ export class Manager {
 
   createRootNode(
     pkgJson: RootPkgJson,
-    projectsJson: Record<string, ProjectPkgJson>
+    workspaceJson: Record<string, ProjectPkgJson>
   ) {
-    pkgJson.name = ".";
-    const projects = Object.create(null);
-    for (const key in projectsJson) {
+    if (!pkgJson.name) pkgJson.name = ".";
+    const workspace = Object.create(null);
+    for (const key in workspaceJson) {
       if (key === pkgJson.name) {
         throw new Error(`Project\'s name cannot be "${pkgJson.name}"`);
       }
-      projectsJson[key].name = key;
-      projects[key] = this.createProjectNode(projectsJson[key]);
+      workspaceJson[key].name = key;
+      workspace[key] = this.createProjectNode(workspaceJson[key]);
     }
 
     return new Node({
-      projects,
+      workspace,
       resolved: "",
       manager: this,
       type: "root",

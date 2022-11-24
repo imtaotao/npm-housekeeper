@@ -133,9 +133,9 @@ export class Lockfile {
 
     // 根目录的名字为 `.`
     this.processTopNode(rootNode, json);
-    if (rootNode.projects) {
-      for (const key in rootNode.projects) {
-        this.processTopNode(rootNode.projects[key], json);
+    if (rootNode.workspace) {
+      for (const key in rootNode.workspace) {
+        this.processTopNode(rootNode.workspace[key], json);
       }
     }
     this.processPackageNodes(manager, json);

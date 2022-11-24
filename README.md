@@ -23,7 +23,7 @@ install({
       'create-react-app': "*",
       '@arco-design/web-react': '*',
     },
-    projects: {
+    workspace: {
       p1: {
         dependencies: {
           'vue': '*',
