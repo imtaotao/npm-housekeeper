@@ -33,7 +33,9 @@ install({
       },
     },
   },
-  lockData: localStorage.getItem('lockData'),
+  legacyPeerDeps: false, // default value `false`
+  registry: 'https://registry.npmjs.org/', // default value `https://registry.npmjs.org` 
+  lockData: localStorage.getItem('lockData'), // set lockfile data
 }).then(apis => {
   const lockData = apis.lockfile.output();
   localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
