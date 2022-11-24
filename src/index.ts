@@ -1,5 +1,6 @@
-import { Manager } from "./manager";
 import type { RootPkgJson } from "./node";
+import { Manager } from "./manager";
+import { cropEmptyPkg } from "./cropPkgs";
 import { Lockfile, LockfileJson } from "./lockfile";
 
 export interface InstallOptions {
@@ -44,11 +45,11 @@ export async function install(opts: InstallOptions) {
     }
   }
   await Promise.all(list);
-  manager.cropEmptyPackages();
+  cropEmptyPkg(manager);
 
   return {
-    manager,
-    lockfile,
-    node: rootNode,
+    node: rootNode as Node,
+    manager: manager as Manager,
+    lockfile: lockfile as Lockfile,
   };
 }

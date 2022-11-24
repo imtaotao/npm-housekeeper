@@ -54,14 +54,6 @@ export class Manager {
     }
   }
 
-  cropEmptyPackages() {
-    this.each((name, version, node) => {
-      if (node.usedEdges.size === 0) {
-        delete this.packages[name][version];
-      }
-    });
-  }
-
   // accept: '' => '*'
   satisfiedBy(node: Node, wanted: string, from: Node | null, accept?: string) {
     if (accept !== undefined) accept = accept || "*";

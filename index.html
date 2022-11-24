@@ -31,16 +31,16 @@
         },
       },
     },
-    // lockData: localStorage.getItem('lockData'),
+    lockData: localStorage.getItem('lockData'),
   }).then(apis => {
-    window.apis = apis;
     const lockData = apis.lockfile.output();
     console.timeEnd('install')
     localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
-   
+    
     console.log(apis.node);
     console.log(lockData);
     console.log(apis.manager.packages.vue);
+    window.apis = apis;
   })
 </script>
 </body>

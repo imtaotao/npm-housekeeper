@@ -15,6 +15,9 @@ Build an ideal tree through `package.json` (cross-platform, can be used in `brow
 import { install } from 'npm-housekeeper';
 
 install({
+  legacyPeerDeps: false, // default value `false`
+  registry: 'https://registry.npmjs.org', // default value `https://registry.npmjs.org` 
+  lockData: localStorage.getItem('lockData'), // set lockfile data
   pkgJson: {
     dependencies: {
       'create-react-app': "*",
@@ -33,9 +36,6 @@ install({
       },
     },
   },
-  legacyPeerDeps: false, // default value `false`
-  registry: 'https://registry.npmjs.org/', // default value `https://registry.npmjs.org` 
-  lockData: localStorage.getItem('lockData'), // set lockfile data
 }).then(apis => {
   const lockData = apis.lockfile.output();
   localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
