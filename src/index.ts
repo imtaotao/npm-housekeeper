@@ -18,12 +18,12 @@ export async function install(opts: InstallOptions) {
   const list = [];
   const lockfile = new Lockfile({
     json: opts.lockfile,
-    pkgJson: opts.pkgJson,
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
   });
 
   const manager = new Manager({
+    lockfile,
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
   });

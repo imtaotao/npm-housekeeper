@@ -3,7 +3,6 @@ import { lockfileVersion, LockfileJson } from "./genLock";
 
 interface LockfileOptions {
   registry: string;
-  pkgJson: RootPkgJson;
   legacyPeerDeps: boolean;
   json?: LockfileJson;
 }
@@ -18,12 +17,11 @@ export class Lockfile {
   }
 
   private canUse() {
-    const { json, pkgJson, registry, legacyPeerDeps } = this.opts;
+    const { json, registry, legacyPeerDeps } = this.opts;
     if (!json) return false;
     if (json.registry !== registry) return false;
     if (json.legacyPeerDeps !== legacyPeerDeps) return false;
     if (json.lockfileVersion !== lockfileVersion) return false;
-    // TODO: ...
     return true;
   }
 }

@@ -1,4 +1,4 @@
-import { Manager } from "./manager";
+import type { Manager } from "./manager";
 
 export type NodeType = "root" | "project" | "package";
 export type EdgeType = "prod" | "dev" | "peer" | "peerOptional" | "optional";
@@ -9,12 +9,7 @@ export interface NodeDeps {
   peerDependencies?: Record<string, string>;
   acceptDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
-  peerDependenciesMeta?: Record<
-    string,
-    {
-      optional: boolean;
-    }
-  >;
+  peerDependenciesMeta?: Record<string, { optional: boolean }>;
 }
 
 export interface NodePkgJson extends NodeDeps {
@@ -39,8 +34,8 @@ export interface Edge {
 
 export interface NodeOptions {
   type: NodeType;
-  manager: Manager;
   resolved: string;
+  manager: Manager;
   pkgJson: NodePkgJson;
   legacyPeerDeps: boolean;
   projects?: Record<string, Node>;

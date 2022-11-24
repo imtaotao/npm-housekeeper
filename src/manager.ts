@@ -1,12 +1,14 @@
 import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
 import { tryToReplace } from "./replace";
+import type { Lockfile } from "./lockfile";
 import { Node, RootPkgJson, ProjectPkgJson } from "./node";
 
 type PackageNodes = Record<string, Node>;
 
 export interface ManagerOptions {
   registry: string;
+  lockfile: Lockfile;
   legacyPeerDeps: boolean;
 }
 
@@ -16,6 +18,10 @@ export class Manager {
   private manifests = new Map<string, PackageData | Promise<PackageData>>();
 
   constructor(public opts: ManagerOptions) {}
+
+  get lockfile() {
+    return this.opts.lockfile;
+  }
 
   fetchManifest(name: string, wanted: string) {
     const spec = `${name}@${wanted}`;
