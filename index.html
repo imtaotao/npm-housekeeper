@@ -11,7 +11,6 @@
 <script>
   console.time('install');
   Housekeeper.install({
-    // lockData: localStorage.getItem('lockData'),
     pkgJson: {
       dependencies: {
         'create-react-app': "*",
@@ -31,7 +30,8 @@
           },
         },
       },
-    }
+    },
+    // lockData: localStorage.getItem('lockData'),
   }).then(apis => {
     window.apis = apis;
     const lockData = apis.lockfile.output();
