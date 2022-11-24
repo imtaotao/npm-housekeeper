@@ -11,7 +11,7 @@
 <script>
   console.time('install');
   Housekeeper.install({
-    // lockfile: localStorage.getItem('lockfile'),
+    lockfile: localStorage.getItem('lockfile'),
     pkgJson: {
       dependencies: {
         'create-react-app': "*",
