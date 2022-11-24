@@ -1,6 +1,6 @@
 import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
-import { tryToReplace } from "./replace";
+import { tryReplace } from "./replace";
 import type { Lockfile } from "./lockfile";
 import { Node, RootPkgJson, ProjectPkgJson } from "./node";
 
@@ -85,18 +85,29 @@ export class Manager {
     if (!this.packages[node.name]) {
       this.packages[node.name] = Object.create(null);
     }
-    tryToReplace(this, node);
+    tryReplace(this, node);
     this.packages[node.name][node.version] = node;
   }
 
   async createNode(name: string, wanted: string) {
-    const pkgJson = await this.fetchManifest(name, wanted);
+    let pkgJson;
+    let resolved;
+    const lockInfo = this.lockfile.tryGetNodeManifest(name, wanted);
+
+    if (lockInfo) {
+      pkgJson = lockInfo;
+      resolved = lockInfo.resolved;
+    } else {
+      pkgJson = await this.fetchManifest(name, wanted);
+      resolved = (pkgJson as PackageData).dist.tarball;
+    }
+
     return new Node({
       pkgJson,
+      resolved,
       manager: this,
       type: "package",
       legacyPeerDeps: this.opts.legacyPeerDeps,
-      resolved: (pkgJson as PackageData).dist.tarball,
     });
   }
 
@@ -112,12 +123,18 @@ export class Manager {
 
   createRootNode(
     pkgJson: RootPkgJson,
-    projectJsons: Record<string, ProjectPkgJson>
+    projectsJson: Record<string, ProjectPkgJson>
   ) {
+    pkgJson.name = ".";
     const projects = Object.create(null);
-    for (const key in projectJsons) {
-      projects[key] = this.createProjectNode(projectJsons[key]);
+    for (const key in projectsJson) {
+      if (key === pkgJson.name) {
+        throw new Error(`Project\'s name cannot be "${pkgJson.name}"`);
+      }
+      projectsJson[key].name = key;
+      projects[key] = this.createProjectNode(projectsJson[key]);
     }
+
     return new Node({
       projects,
       resolved: "",

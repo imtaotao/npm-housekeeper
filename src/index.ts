@@ -6,8 +6,8 @@ import type { RootPkgJson } from "./node";
 export interface InstallOptions {
   pkgJson: RootPkgJson;
   registry?: string;
-  lockfile?: LockfileJson;
   legacyPeerDeps?: boolean;
+  lockfile?: LockfileJson | string;
 }
 
 export async function install(opts: InstallOptions) {

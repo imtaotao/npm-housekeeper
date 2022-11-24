@@ -17,11 +17,14 @@ export interface NodePkgJson extends NodeDeps {
   version: string;
 }
 
-export interface RootPkgJson extends NodeDeps {
-  projects?: Record<string, ProjectPkgJson>;
+export interface ProjectPkgJson extends NodeDeps {
+  name?: string;
 }
 
-export interface ProjectPkgJson extends NodeDeps {}
+export interface RootPkgJson extends NodeDeps {
+  name?: string;
+  projects?: Record<string, ProjectPkgJson>;
+}
 
 export interface Edge {
   node: Node;
@@ -65,12 +68,12 @@ export class Node {
     this.legacyPeerDeps = opts.legacyPeerDeps;
   }
 
-  isOptionalEdge(type: EdgeType) {
-    return type === "optional" || type === "peerOptional";
-  }
-
   isTop() {
     return this.type === "root" || this.type === "project";
+  }
+
+  isOptionalEdge(type: EdgeType) {
+    return type === "optional" || type === "peerOptional";
   }
 
   hasError() {
@@ -79,13 +82,19 @@ export class Node {
 
   loadDeps() {
     const list = [];
-    // 是否自动安装 peerDependencies
-    const pd = this.pkg.peerDependencies;
+    const {
+      dependencies,
+      devDependencies,
+      optionalDependencies,
+      peerDependencies: pd,
+    } = this.pkg;
 
-    if (pd && typeof pd === "object" && !this.legacyPeerDeps) {
+    // 安装 peerDependencies
+    if (pd && !this.legacyPeerDeps) {
       const pm = this.pkg.peerDependenciesMeta || {};
-      const peerDependencies: Record<string, string> = {};
       const peerOptional: Record<string, string> = {};
+      const peerDependencies: Record<string, string> = {};
+
       for (const [name, dep] of Object.entries(pd)) {
         if (pm[name] && pm[name].optional) {
           peerOptional[name] = dep;
@@ -97,39 +106,25 @@ export class Node {
       list.push(this.loadDepType(peerOptional, "peerOptional"));
     }
 
-    const { dependencies, devDependencies, optionalDependencies } = this.pkg;
+    // 安装其他的依赖
     list.push(this.loadDepType(dependencies, "prod"));
     list.push(this.loadDepType(optionalDependencies, "optional"));
     // 只有项目需要安装 devDependencies
     if (this.isTop()) {
       list.push(this.loadDepType(devDependencies, "dev"));
     }
-    return Promise.all(list);
-  }
 
-  private createEdge(
-    node: Node,
-    wanted: string,
-    type: EdgeType,
-    accept?: string
-  ) {
-    const edge: Edge = Object.create(null);
-    edge.node = node;
-    edge.type = type;
-    edge.accept = accept;
-    edge.wanted = wanted;
-    edge.name = node.name;
-    edge.link = true; // 所有的都是 link，我们是模仿 pnpm 的行为
-    return edge;
+    return Promise.all(list);
   }
 
   private loadDepType(
     deps: Record<string, string> | undefined,
     type: EdgeType
   ) {
+    if (!deps) return;
     const list = [];
     const ad = this.pkg.acceptDependencies || {};
-    for (const [name, wanted] of Object.entries(deps || {})) {
+    for (const [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
       this.edges[name] = Object.create(null) as any; // 占位（如果是 optional 就可能是空对象）
       const accept = ad[name];
@@ -139,9 +134,11 @@ export class Node {
         this.edges[name] = this.createEdge(node, wanted, type, accept);
         node.usedEdges.add(this.edges[name]);
       } else {
+        const version = this.tryGetVersionInTop(name, wanted, type);
+        const searchWanted = version === null ? wanted : version;
         list.push(
           this.manager
-            .createNode(name, wanted)
+            .createNode(name, searchWanted)
             .then(async (node) => {
               this.edges[name] = this.createEdge(node, wanted, type, accept);
               node.usedEdges.add(this.edges[name]);
@@ -159,5 +156,31 @@ export class Node {
       }
     }
     return Promise.all(list);
+  }
+
+  private tryGetVersionInTop(name: string, wanted: string, type: EdgeType) {
+    if (!this.isTop()) return null;
+    return this.manager.lockfile.tryGetTopEdgeVersion(
+      this.name,
+      name,
+      wanted,
+      type
+    );
+  }
+
+  private createEdge(
+    node: Node,
+    wanted: string,
+    type: EdgeType,
+    accept?: string
+  ) {
+    const edge: Edge = Object.create(null);
+    edge.node = node;
+    edge.type = type;
+    edge.accept = accept;
+    edge.wanted = wanted;
+    edge.name = node.name;
+    edge.link = true; // 所有的都是 link，我们是模仿 pnpm 的行为
+    return edge;
   }
 }

@@ -1,11 +1,12 @@
 import { Manager } from "./manager";
-import { Node, EdgeType, NodeDeps, NodePkgJson } from "./node";
+import { Node, NodeDeps } from "./node";
+import { getDepNameByEdgeType } from "./utils";
 
-interface ImporterValue extends NodeDeps {
+export interface ImporterValue extends NodeDeps {
   specifiers?: Record<string, string>;
 }
 
-interface PackageValue extends NodeDeps {
+export interface PackageValue extends NodeDeps {
   resolved: string;
 }
 
@@ -14,7 +15,7 @@ export interface LockfileJson {
   legacyPeerDeps: boolean;
   lockfileVersion: string;
   importers: Record<string, ImporterValue>;
-  packages: Record<string, NodePkgJson>;
+  packages: Record<string, Record<string, PackageValue>>;
 }
 
 export const lockfileVersion = "1";
@@ -30,32 +31,24 @@ export function genLockfile(rootNode: Node) {
   json.packages = Object.create(null);
 
   // 根目录的名字为 `.`
-  processTopNode(".", rootNode, json);
+  processTopNode(rootNode, json);
   if (rootNode.projects) {
-    for (const projectName in rootNode.projects) {
-      processTopNode(projectName, rootNode.projects[projectName], json);
+    for (const key in rootNode.projects) {
+      processTopNode(rootNode.projects[key], json);
     }
   }
   processPackageNodes(manager, json);
   return json;
 }
 
-const getDepNameByEdgeType = (type: EdgeType) => {
-  if (type === "prod") return "dependencies";
-  if (type === "dev") return "devDependencies";
-  if (type === "peer") return "peerDependencies";
-  if (type === "optional") return "optionalDependencies";
-  if (type === "peerOptional") return "peerDependenciesMeta";
-  throw new TypeError(`Invalid edge type "${type}"`);
-};
-
-const processTopNode = (name: string, targetNode: Node, json: LockfileJson) => {
+const processTopNode = (targetNode: Node, json: LockfileJson) => {
   if (targetNode.isTop()) {
-    const importerValue = (json.importers[name] = Object.create(null));
+    const importerValue = (json.importers[targetNode.name] =
+      Object.create(null));
 
     for (const key in targetNode.edges) {
       const { node, type, name, wanted } = targetNode.edges[key];
-      const prop = getDepNameByEdgeType(type);
+      const prop = getDepNameByEdgeType(type, false);
       // 依赖
       if (prop === "peerDependenciesMeta") {
         let peerMeta = importerValue[prop];
@@ -75,31 +68,32 @@ const processTopNode = (name: string, targetNode: Node, json: LockfileJson) => {
 };
 
 const processPackageNodes = (manager: Manager, json: LockfileJson) => {
-  for (const pkgKey in manager.packages) {
-    for (const version in manager.packages[pkgKey]) {
-      const targetNode = manager.packages[pkgKey][version];
-      const spec = `${targetNode.name}@${targetNode.version}`;
+  manager.each((name, version, targetNode) => {
+    let pkgVersions = json.packages[name];
+    if (!pkgVersions) {
+      pkgVersions = json.packages[name] = Object.create(null);
+    }
+    let packageValue = pkgVersions[version];
+    if (!packageValue) {
+      packageValue = pkgVersions[version] = Object.create(null);
+    }
 
-      // 包的具体版本和下载地址
-      const packageValue = (json.packages[spec] = Object.create(null));
-      packageValue.name = targetNode.name;
-      packageValue.version = targetNode.version;
-      packageValue.resolved = targetNode.resolved;
+    // 下载地址
+    packageValue.resolved = targetNode.resolved;
 
-      for (const key in targetNode.edges) {
-        const { node, type, name } = targetNode.edges[key];
-        const prop = getDepNameByEdgeType(type);
-        // 依赖
-        if (prop === "peerDependenciesMeta") {
-          let peerMeta = packageValue[prop];
-          if (!peerMeta) peerMeta = packageValue[prop] = Object.create(null);
-          if (!peerMeta![name]) peerMeta![name] = Object.create(null);
-          peerMeta![name].optional = true;
-        } else {
-          if (!packageValue[prop]) packageValue[prop] = Object.create(null);
-          packageValue[prop]![name] = node.version;
-        }
+    for (const key in targetNode.edges) {
+      const { node, type, name } = targetNode.edges[key];
+      const prop = getDepNameByEdgeType(type, false);
+      // 依赖
+      if (prop === "peerDependenciesMeta") {
+        let peerMeta = packageValue[prop];
+        if (!peerMeta) peerMeta = packageValue[prop] = Object.create(null);
+        if (!peerMeta![name]) peerMeta![name] = Object.create(null);
+        peerMeta![name].optional = true;
+      } else {
+        if (!packageValue[prop]) packageValue[prop] = Object.create(null);
+        packageValue[prop]![name] = node.version;
       }
     }
-  }
+  });
 };

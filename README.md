@@ -15,6 +15,7 @@ Build ideal tree by `package.json`.
 import { install } from 'npm-housekeeper';
 
 install({
+  lockfile: localStorage.getItem('lockfile'),
   pkgJson: {
     dependencies: {
       'create-react-app': "*",
@@ -34,8 +35,11 @@ install({
     },
   }
 }).then(apis => {
+  const lockfile = apis.lockfile();
+  localStorage.setItem('lockfile', JSON.stringify(lockfile, null, 2));
+  
   console.log(apis.node);
-  console.log(apis.lockfile());
+  console.log(lockfile);
 })
 ```
 
