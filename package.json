@@ -1,6 +1,6 @@
 {
   "name": "npm-housekeeper",
-  "version": "0.0.1-beta.5",
+  "version": "0.0.1-beta.6",
   "description": "Generate a dependency tree",
   "main": "dist/tree.cjs.js",
   "module": "dist/tree.esm-bundler.js",

@@ -86,7 +86,7 @@ export class Node {
     if (!this.isTop()) {
       throw new Error("Only add dependencies to the top node");
     }
-    this.loadSingleDepType(name, version, edgeType);
+    return this.loadSingleDepType(name, version, edgeType);
   }
 
   loadDeps() {
@@ -153,23 +153,26 @@ export class Node {
     if (node) {
       this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
       node.usedEdges.add(this.edges[name]);
-    } else {
+      return true;
+    }
+
+    try {
       const version = this.tryGetVersionInTop(name, wanted, edgeType);
       const searchWanted = version === null ? wanted : version;
+      const node = await this.manager.createNode(name, searchWanted);
 
-      try {
-        const node = await this.manager.createNode(name, searchWanted);
-        this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
-        node.usedEdges.add(this.edges[name]);
-        this.manager.set(node);
-        // 子节点也要加载他自己的依赖
-        await node.loadDeps();
-      } catch (e: any) {
-        // 如果是可选的，允许有错误发生
-        if (!this.isOptionalEdge(edgeType)) {
-          this.errors.push(e);
-        }
+      this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
+      node.usedEdges.add(this.edges[name]);
+      this.manager.set(node);
+      // 子节点也要加载他自己的依赖
+      await node.loadDeps();
+      return true;
+    } catch (e: any) {
+      // 如果是可选的，允许有错误发生
+      if (!this.isOptionalEdge(edgeType)) {
+        this.errors.push(e);
       }
+      return false;
     }
   }
 
