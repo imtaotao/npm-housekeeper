@@ -5,7 +5,7 @@
 
 </div>
 
-Build ideal tree by `package.json`.
+Build an ideal tree through `package.json` (cross-platform, can be used in `browsers`).
 
 [Online test platform](https://imtaotao.github.io/npm-housekeeper/)
 
