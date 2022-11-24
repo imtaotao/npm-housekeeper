@@ -154,7 +154,7 @@ export class Lockfile {
     pname: string,
     name: string,
     wanted: string,
-    type: EdgeType
+    edgeType: EdgeType
   ) {
     if (!this.json) return null;
     const lockInfo = this.json.importers[pname];
@@ -164,7 +164,7 @@ export class Lockfile {
     if (oldWanted) {
       try {
         if (oldWanted === wanted || semver.eq(oldWanted, wanted)) {
-          const lockDep = lockInfo[getDepNameByEdgeType(type, true)];
+          const lockDep = lockInfo[getDepNameByEdgeType(edgeType, true)];
           // 如果新的包在 dependencies, 而 lock 文件中在 DevDependencies 中，现在的算法是不匹配
           if (!lockDep) return null;
           return (lockDep[name] as string) || null;

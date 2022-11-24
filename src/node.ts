@@ -74,12 +74,19 @@ export class Node {
     return this.type === "root" || this.type === "project";
   }
 
-  isOptionalEdge(type: EdgeType) {
-    return type === "optional" || type === "peerOptional";
+  isOptionalEdge(edgeType: EdgeType) {
+    return edgeType === "optional" || edgeType === "peerOptional";
   }
 
   hasError() {
     return this.errors.length > 0;
+  }
+
+  add(name: string, version: string, edgeType: "prod" | "dev" | "peer") {
+    if (!this.isTop()) {
+      throw new Error("Only add dependencies to the top node");
+    }
+    this.loadSingleDepType(name, version, edgeType);
   }
 
   loadDeps() {
@@ -121,64 +128,70 @@ export class Node {
 
   private loadDepType(
     deps: Record<string, string> | undefined,
-    type: EdgeType
+    edgeType: EdgeType
   ) {
     if (!deps) return;
     const list = [];
-    const ad = this.pkg.acceptDependencies || {};
     for (const [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
-      this.edges[name] = Object.create(null) as any; // 占位（如果是 optional 就可能是空对象）
-      const accept = ad[name];
-      const node = this.manager.get(name, wanted, this, accept);
-
-      if (node) {
-        this.edges[name] = this.createEdge(node, wanted, type, accept);
-        node.usedEdges.add(this.edges[name]);
-      } else {
-        const version = this.tryGetVersionInTop(name, wanted, type);
-        const searchWanted = version === null ? wanted : version;
-        list.push(
-          this.manager
-            .createNode(name, searchWanted)
-            .then(async (node) => {
-              this.edges[name] = this.createEdge(node, wanted, type, accept);
-              node.usedEdges.add(this.edges[name]);
-              this.manager.set(node);
-              // 子节点也要加载他自己的依赖
-              await node.loadDeps();
-            })
-            .catch((e) => {
-              // 如果是可选的，允许有错误发生
-              if (!this.isOptionalEdge(type)) {
-                this.errors.push(e);
-              }
-            })
-        );
-      }
+      list.push(this.loadSingleDepType(name, wanted, edgeType));
     }
     return Promise.all(list);
   }
 
-  private tryGetVersionInTop(name: string, wanted: string, type: EdgeType) {
+  // 这会强制更新 edge节点
+  private async loadSingleDepType(
+    name: string,
+    wanted: string,
+    edgeType: EdgeType
+  ) {
+    const ad = this.pkg.acceptDependencies || {};
+    this.edges[name] = Object.create(null) as any; // 占位（如果是 optional 就可能是空对象）
+    const accept = ad[name];
+    const node = this.manager.get(name, wanted, this, accept);
+
+    if (node) {
+      this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
+      node.usedEdges.add(this.edges[name]);
+    } else {
+      const version = this.tryGetVersionInTop(name, wanted, edgeType);
+      const searchWanted = version === null ? wanted : version;
+
+      try {
+        const node = await this.manager.createNode(name, searchWanted);
+        this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
+        node.usedEdges.add(this.edges[name]);
+        this.manager.set(node);
+        // 子节点也要加载他自己的依赖
+        await node.loadDeps();
+      } catch (e: any) {
+        // 如果是可选的，允许有错误发生
+        if (!this.isOptionalEdge(edgeType)) {
+          this.errors.push(e);
+        }
+      }
+    }
+  }
+
+  private tryGetVersionInTop(name: string, wanted: string, edgeType: EdgeType) {
     if (!this.isTop()) return null;
     return this.manager.lockfile.tryGetTopEdgeVersion(
       this.name,
       name,
       wanted,
-      type
+      edgeType
     );
   }
 
   private createEdge(
     node: Node,
     wanted: string,
-    type: EdgeType,
+    edgeType: EdgeType,
     accept?: string
   ) {
     const edge: Edge = Object.create(null);
     edge.node = node;
-    edge.type = type;
+    edge.type = edgeType;
     edge.accept = accept;
     edge.wanted = wanted;
     edge.name = node.name;
