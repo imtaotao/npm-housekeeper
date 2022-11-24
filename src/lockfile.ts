@@ -63,62 +63,6 @@ export class Lockfile {
     return true;
   }
 
-  tryGetNodeManifest(name: string, version: string) {
-    if (!this.json) return null;
-    if (!this.json.packages[name]) return null;
-    const data = this.json.packages[name][version];
-    if (!data) return null;
-    return { name, version, ...data };
-  }
-
-  tryGetTopEdgeVersion(
-    pname: string,
-    name: string,
-    wanted: string,
-    type: EdgeType
-  ) {
-    if (!this.json) return null;
-    const lockInfo = this.json.importers[pname];
-    if (!lockInfo || !lockInfo.specifiers) return null;
-    const oldWanted = lockInfo.specifiers[name];
-
-    if (oldWanted) {
-      try {
-        if (oldWanted === wanted || semver.eq(oldWanted, wanted)) {
-          const lockDep = lockInfo[getDepNameByEdgeType(type, true)];
-          // 如果新的包在 dependencies, 而 lock 文件中在 DevDependencies 中，现在的算法是不匹配
-          if (!lockDep) return null;
-          return (lockDep[name] as string) || null;
-        }
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  output() {
-    const rootNode = this.rootNodeGetter();
-    const { manager } = rootNode;
-    const json: LockfileJson = Object.create(null);
-
-    json.lockfileVersion = this.version;
-    json.registry = manager.opts.registry;
-    json.legacyPeerDeps = rootNode.legacyPeerDeps;
-    json.importers = Object.create(null);
-    json.packages = Object.create(null);
-
-    // 根目录的名字为 `.`
-    this.processTopNode(rootNode, json);
-    if (rootNode.projects) {
-      for (const key in rootNode.projects) {
-        this.processTopNode(rootNode.projects[key], json);
-      }
-    }
-    this.processPackageNodes(manager, json);
-    return json;
-  }
-
   private processTopNode(targetNode: Node, json: LockfileJson) {
     if (targetNode.isTop()) {
       const importerValue = (json.importers[targetNode.name] =
@@ -156,13 +100,13 @@ export class Lockfile {
         packageValue = pkgVersions[version] = Object.create(null);
       }
 
-      // 下载地址
+      // 保存下载地址
       packageValue.resolved = targetNode.resolved;
 
       for (const key in targetNode.edges) {
         const { node, type, name } = targetNode.edges[key];
         const prop = getDepNameByEdgeType(type, false);
-        // 依赖
+        // 保存依赖版本
         if (prop === "peerDependenciesMeta") {
           let peerMeta = packageValue[prop];
           if (!peerMeta) peerMeta = packageValue[prop] = Object.create(null);
@@ -174,5 +118,62 @@ export class Lockfile {
         }
       }
     });
+  }
+
+  output() {
+    const rootNode = this.rootNodeGetter();
+    const { manager } = rootNode;
+    const json: LockfileJson = Object.create(null);
+
+    json.lockfileVersion = this.version;
+    json.registry = manager.opts.registry;
+    json.legacyPeerDeps = rootNode.legacyPeerDeps;
+    json.importers = Object.create(null);
+    json.packages = Object.create(null);
+
+    // 根目录的名字为 `.`
+    this.processTopNode(rootNode, json);
+    if (rootNode.projects) {
+      for (const key in rootNode.projects) {
+        this.processTopNode(rootNode.projects[key], json);
+      }
+    }
+    this.processPackageNodes(manager, json);
+    return json;
+  }
+
+  tryGetNodeManifest(name: string, version: string) {
+    if (!this.json) return null;
+    if (!this.json.packages[name]) return null;
+    const data = this.json.packages[name][version];
+    if (!data) return null;
+    return { name, version, ...data };
+  }
+
+  tryGetTopEdgeVersion(
+    pname: string,
+    name: string,
+    wanted: string,
+    type: EdgeType
+  ) {
+    if (!this.json) return null;
+    const lockInfo = this.json.importers[pname];
+    if (!lockInfo || !lockInfo.specifiers) return null;
+    const oldWanted = lockInfo.specifiers[name];
+
+    if (oldWanted) {
+      try {
+        if (oldWanted === wanted || semver.eq(oldWanted, wanted)) {
+          const lockDep = lockInfo[getDepNameByEdgeType(type, true)];
+          // 如果新的包在 dependencies, 而 lock 文件中在 DevDependencies 中，现在的算法是不匹配
+          if (!lockDep) return null;
+          return (lockDep[name] as string) || null;
+        }
+      } catch (e) {
+        // semver 版本比较可能报错
+        return null;
+      }
+    }
+    return null;
   }
 }
