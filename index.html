@@ -6,7 +6,7 @@
 </head>
 <body>
 <div>Please open the console to start the test</div>
-<script src="https://unpkg.com/npm-housekeeper@latest/dist/housekeeper.umd.js"></script>
+<!-- <script src="https://unpkg.com/npm-housekeeper@latest/dist/housekeeper.umd.js"></script> -->
 <script src="http://127.0.0.1:8085/dist/housekeeper.umd.js"></script>
 <script>
   console.time('install');
@@ -33,6 +33,7 @@
     },
     // lockData: localStorage.getItem('lockData'),
   }).then(apis => {
+    window.apis = apis;
     const lockData = apis.lockfile.output();
     console.timeEnd('install')
     localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
@@ -40,9 +41,17 @@
     console.log(apis.node);
     console.log(lockData);
     console.log(apis.manager.packages.vue);
-    console.log(Object.keys(apis.manager.packages), Object.keys(lockData.packages));
-    window.apis = apis;
+    console.log(Object.keys(apis.manager.packages));
   })
+</script>
+<script src="./data/c.js"></script>
+<script src="./data/n.js"></script>
+<script>
+  for (const k of n) {
+    if (!c.includes(k)) {
+      console.log('cache no', k);
+    }
+  }
 </script>
 </body>
 </html>
