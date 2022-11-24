@@ -11,7 +11,7 @@
 <script>
   console.time('install');
   Housekeeper.install({
-    lockfile: localStorage.getItem('lockfile'),
+    // lockData: localStorage.getItem('lockData'),
     pkgJson: {
       dependencies: {
         'create-react-app': "*",
@@ -34,12 +34,13 @@
     }
   }).then(apis => {
     window.apis = apis;
-    const lockfile = apis.lockfile.output();
+    const lockData = apis.lockfile.output();
     console.timeEnd('install')
-    localStorage.setItem('lockfile', JSON.stringify(lockfile, null, 2));
+    localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
    
     console.log(apis.node);
-    console.log(lockfile);
+    console.log(lockData);
+    console.log(apis.manager.packages.vue);
   })
 </script>
 </body>

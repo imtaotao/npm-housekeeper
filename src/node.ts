@@ -32,6 +32,7 @@ export interface Edge {
   link: boolean;
   name: string;
   wanted: string;
+  parentNode: Node;
   accept?: string;
 }
 
@@ -180,6 +181,7 @@ export class Node {
     edge.accept = accept;
     edge.wanted = wanted;
     edge.name = node.name;
+    edge.parentNode = this;
     edge.link = true; // 所有的都是 link，我们是模仿 pnpm 的行为
     return edge;
   }

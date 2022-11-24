@@ -6,7 +6,7 @@ export interface InstallOptions {
   pkgJson: RootPkgJson;
   registry?: string;
   legacyPeerDeps?: boolean;
-  lockfile?: LockfileJson | string;
+  lockData?: LockfileJson | string;
 }
 
 export async function install(opts: InstallOptions) {
@@ -18,7 +18,7 @@ export async function install(opts: InstallOptions) {
 
   // @ts-ignore
   const lockfile = new Lockfile({
-    json: opts.lockfile,
+    json: opts.lockData,
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
     rootNodeGetter: () => rootNode,
