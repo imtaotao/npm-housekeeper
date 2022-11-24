@@ -3,13 +3,15 @@ import type { Manager } from "./manager";
 
 const cache = new WeakMap<Node, boolean>();
 
-const getTopParent = (parentNode: Node, state: WeakSet<Node>): Node | null => {
-  if (state.has(parentNode)) return null;
-  if (parentNode.isTop()) return parentNode;
-  state.add(parentNode);
-  for (const edge of parentNode.usedEdges) {
-    const topNode = getTopParent(edge.parentNode, state);
-    if (topNode) return topNode;
+const getTopParent = (node: Node, state: WeakSet<Node>): Node | null => {
+  if (node.isTop()) return node;
+  state.add(node);
+  for (const edge of node.usedEdges) {
+    // 如果有回环，则代表循环依赖了，判断其他节点即可
+    if (!state.has(edge.parentNode)) {
+      const topNode = getTopParent(edge.parentNode, state);
+      if (topNode) return topNode;
+    }
   }
   return null;
 };
