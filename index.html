@@ -34,7 +34,7 @@
     }
   }).then(apis => {
     window.apis = apis;
-    const lockfile = apis.lockfile();
+    const lockfile = apis.lockfile.output();
     console.timeEnd('install')
     localStorage.setItem('lockfile', JSON.stringify(lockfile, null, 2));
    

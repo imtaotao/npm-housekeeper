@@ -1,7 +1,6 @@
 import { Manager } from "./manager";
-import { Lockfile } from "./lockfile";
-import { LockfileJson, genLockfile } from "./genLock";
 import type { RootPkgJson } from "./node";
+import { Lockfile, LockfileJson } from "./lockfile";
 
 export interface InstallOptions {
   pkgJson: RootPkgJson;
@@ -16,18 +15,23 @@ export async function install(opts: InstallOptions) {
   if (!opts.registry.endsWith("/")) opts.registry += "/";
 
   const list = [];
+
+  // @ts-ignore
   const lockfile = new Lockfile({
     json: opts.lockfile,
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
+    rootNodeGetter: () => rootNode,
   });
 
+  // @ts-ignore
   const manager = new Manager({
     lockfile,
     registry: opts.registry,
     legacyPeerDeps: opts.legacyPeerDeps,
   });
 
+  // @ts-ignore
   const rootNode = manager.createRootNode(
     opts.pkgJson,
     opts.pkgJson.projects || {}
@@ -44,7 +48,7 @@ export async function install(opts: InstallOptions) {
 
   return {
     manager,
+    lockfile,
     node: rootNode,
-    lockfile: () => genLockfile(rootNode),
   };
 }
