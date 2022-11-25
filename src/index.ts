@@ -1,11 +1,12 @@
 import type { RootPkgJson } from "./node";
-import { Manager } from "./manager";
+import { Manager, FilterType } from "./manager";
 import { cropEmptyPkg } from "./cropPkgs";
 import { Lockfile, LockfileJson } from "./lockfile";
 
 export interface InstallOptions {
-  pkgJson?: RootPkgJson;
   registry?: string;
+  filter?: FilterType;
+  pkgJson?: RootPkgJson;
   legacyPeerDeps?: boolean;
   customFetch?: typeof fetch;
   lockData?: LockfileJson | string;
@@ -23,6 +24,7 @@ export async function install(opts: InstallOptions = {}) {
 
   const manager = new Manager({
     lockfile,
+    filter: opts.filter,
     registry: opts.registry,
     customFetch: opts.customFetch,
     legacyPeerDeps: opts.legacyPeerDeps,

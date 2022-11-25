@@ -165,6 +165,9 @@ export class Node {
     const ls = [];
     for (const [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
+      if (typeof this.manager.opts.filter === "function") {
+        if (this.manager.opts.filter(name, wanted)) continue;
+      }
       ls.push(this.loadSingleDepType(name, wanted, edgeType));
     }
     return Promise.all(ls);

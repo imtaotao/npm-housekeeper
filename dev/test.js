@@ -24,6 +24,7 @@ const pkgJson = {
 install({
   pkgJson,
   lockData: localStorage.getItem("lockData"),
+  filter: (name) => name.startsWith("@types"),
 }).then(async (apis) => {
   globalThis.apis = apis;
   console.timeEnd("install");
@@ -33,6 +34,7 @@ install({
     const lockData = apis.lockfile.output();
     localStorage.setItem("lockData", JSON.stringify(lockData, null, 2));
     console.log(lockData);
+    console.log(Object.keys(lockData.packages));
   };
   setLockfile();
 

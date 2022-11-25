@@ -9,10 +9,13 @@ type EachCallback = (
   node: Node
 ) => void | boolean;
 
+export type FilterType = (name: string, wanted: string) => boolean;
+
 export interface ManagerOptions {
   registry: string;
   lockfile: Lockfile;
   legacyPeerDeps: boolean;
+  filter?: FilterType;
   customFetch?: typeof fetch;
 }
 
