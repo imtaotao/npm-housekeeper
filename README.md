@@ -37,10 +37,14 @@ install({
     },
   },
 }).then(async apis => {
-  const lockData = apis.lockfile.output(); // lockData is null when there is an error
-  console.log(lockData);
   console.log(apis.node); // root node
-  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2)); // Save lockfile
+
+  // lockData is null when there is an error
+  const lockData = apis.lockfile.output();
+  console.log(lockData);
+
+   // Save lockfile
+  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
 })
 ```
 
@@ -49,12 +53,14 @@ install({
 
 ```js
 install().then(async apis => {
-  //  - `version` default is `latest`
-  //  - `depType` default is `prod`
+  // - `version` default is `latest`
+  // - `depType` default is `prod`
   const expressNode = await apis.node.add('express', 'latest', 'prod')
   console.log(expressNode);
+
+  // Update lockfile data
   const lockData = apis.lockfile.output();
-  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2)); // Update lockfile data
+  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
 })
 ```
 
