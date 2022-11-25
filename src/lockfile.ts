@@ -119,7 +119,6 @@ export class Lockfile {
     json.importers = Object.create(null);
     json.packages = Object.create(null);
 
-    // 根目录的名字为 `.`
     this.processTopNode(rootNode, json);
     if (rootNode.workspace) {
       for (const key in rootNode.workspace) {

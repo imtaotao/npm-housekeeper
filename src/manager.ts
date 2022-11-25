@@ -1,6 +1,5 @@
 import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
-import { tryReplace } from "./replace";
 import type { Lockfile } from "./lockfile";
 import { Node, RootPkgJson, ProjectPkgJson } from "./node";
 
@@ -21,6 +20,25 @@ export class Manager {
 
   get lockfile() {
     return this.opts.lockfile;
+  }
+
+  // 对于已经生成的 node，里面有一些可能可以被当前这个 node 替代，要尽可能复用同一个
+  private tryReplace(target: Node) {
+    const nodes = this.packages[target.name];
+    if (nodes) {
+      for (const version in nodes) {
+        const node = nodes[version];
+        if (node !== target) {
+          for (const edge of node.usedEdges) {
+            if (this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
+              edge.node = target;
+              target.usedEdges.add(edge);
+              node.usedEdges.delete(edge);
+            }
+          }
+        }
+      }
+    }
   }
 
   fetchManifest(name: string, wanted: string) {
@@ -77,7 +95,7 @@ export class Manager {
     if (!this.packages[node.name]) {
       this.packages[node.name] = Object.create(null);
     }
-    tryReplace(this, node);
+    this.tryReplace(node);
     this.packages[node.name][node.version] = node;
   }
 
