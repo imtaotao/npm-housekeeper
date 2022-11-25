@@ -36,7 +36,7 @@ install({
       },
     },
   },
-}).then(apis => {
+}).then(async apis => {
   console.log(apis.node); // root node
 
   const setLockfile = () => {
@@ -49,10 +49,9 @@ install({
   // add other deps
   //  - version default is `latest`
   //  - depType default is `prod`
-  apis.node.add('express', 'latest', 'prod').then((expressNode) => {
-    console.log(expressNode);
-    setLockfile(); // update lockfile data
-  })
+  const expressNode = await apis.node.add('express', 'latest', 'prod')
+  console.log(expressNode);
+  setLockfile(); // update lockfile data
 })
 ```
 
