@@ -4,9 +4,10 @@ import { cropEmptyPkg } from "./cropPkgs";
 import { Lockfile, LockfileJson } from "./lockfile";
 
 export interface InstallOptions {
-  pkgJson: RootPkgJson;
+  pkgJson?: RootPkgJson;
   registry?: string;
   legacyPeerDeps?: boolean;
+  customFetch?: typeof fetch;
   lockData?: LockfileJson | string;
 }
 
@@ -24,13 +25,11 @@ export async function install(opts: InstallOptions) {
   const manager = new Manager({
     lockfile,
     registry: opts.registry,
+    customFetch: opts.customFetch,
     legacyPeerDeps: opts.legacyPeerDeps,
   });
 
-  const node = manager.createRootNode(
-    opts.pkgJson,
-    opts.pkgJson.workspace || {}
-  );
+  const node = manager.createRootNode(opts.pkgJson, opts.pkgJson?.workspace);
 
   const ls = [];
   ls.push(node.loadDeps());

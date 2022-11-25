@@ -18,7 +18,7 @@ install({
   legacyPeerDeps: false, // default value `false`
   registry: 'https://registry.npmjs.org', // default value `https://registry.npmjs.org` 
   lockData: localStorage.getItem('lockData'), // set lockfile data
-  pkgJson: {
+  pkgJson: { // default value `{}`
     dependencies: {
       'create-react-app': "*",
       '@arco-design/web-react': '*',
@@ -37,11 +37,22 @@ install({
     },
   },
 }).then(apis => {
-  const lockData = apis.lockfile.output();
-  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
-  
-  console.log(apis.node);
-  console.log(lockData);
+  console.log(apis.node); // root node
+
+  const setLockfile = () => {
+    const lockData = apis.lockfile.output();
+    localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
+    console.log(lockData);
+  }
+  setLockfile(); // set lockfile data
+
+  // add other deps
+  //  - version default is `latest`
+  //  - depType default is `prod`
+  apis.node.add('express', 'latest', 'prod').then((expressNode) => {
+    console.log(expressNode);
+    setLockfile(); // update lockfile data
+  })
 })
 ```
 

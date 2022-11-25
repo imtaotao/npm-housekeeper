@@ -1,4 +1,5 @@
 import type { Manager } from "./manager";
+import { getDepPropByEdgeType } from "./utils";
 
 export type NodeType = "root" | "project" | "package";
 export type EdgeType = "prod" | "dev" | "peer" | "peerOptional" | "optional";
@@ -40,6 +41,7 @@ export interface Edge {
 export interface NodeOptions {
   type: NodeType;
   resolved: string;
+  integrity: string;
   manager: Manager;
   pkgJson: NodePkgJson;
   legacyPeerDeps: boolean;
@@ -53,6 +55,7 @@ export class Node {
   public version: string;
   public manager: Manager;
   public resolved: string;
+  public integrity: string;
   public legacyPeerDeps: boolean;
   public usedEdges = new Set<Edge>();
   public errors: Array<Error | string> = [];
@@ -66,6 +69,7 @@ export class Node {
     this.type = opts.type;
     this.manager = opts.manager;
     this.resolved = opts.resolved;
+    this.integrity = opts.integrity;
     this.workspace = opts.workspace || null;
     this.legacyPeerDeps = opts.legacyPeerDeps;
   }
@@ -82,18 +86,29 @@ export class Node {
     return this.errors.length > 0;
   }
 
-  add(
+  async add(
     name: string,
-    version: string,
-    edgeType: "prod" | "dev" | "peer" = "prod"
-  ) {
-    if (!this.isTop()) {
+    version = "latest",
+    edgeType: "prod" | "dev" | "peer" = "prod",
+    force?: boolean
+  ): Promise<Node> {
+    if (!force && !this.isTop()) {
       throw new Error("Only add dependencies to the top node");
     }
     if (edgeType !== "prod" && edgeType !== "dev" && edgeType !== "peer") {
       throw new TypeError(`Invalid dependency type "${edgeType}"`);
     }
-    return this.loadSingleDepType(name, version, edgeType);
+
+    const nodeOrErr = await this.loadSingleDepType(name, version, edgeType);
+
+    if (nodeOrErr instanceof Node) {
+      const prop = getDepPropByEdgeType(edgeType, true);
+      if (!this.pkg[prop]) this.pkg[prop] = Object.create(null);
+      this.pkg[prop]![name] = version;
+      return nodeOrErr as Node;
+    } else {
+      throw nodeOrErr;
+    }
   }
 
   loadDeps() {
@@ -125,7 +140,7 @@ export class Node {
     // 安装其他的依赖
     ls.push(this.loadDepType(dependencies, "prod"));
     ls.push(this.loadDepType(optionalDependencies, "optional"));
-    // 只有项目需要安装 devDependencies
+    // 只有 top 项目需要安装 devDependencies
     if (this.isTop()) {
       ls.push(this.loadDepType(devDependencies, "dev"));
     }
@@ -146,7 +161,7 @@ export class Node {
     return Promise.all(ls);
   }
 
-  // 这会强制更新 edge节点
+  // 这会强制更新 edge 节点
   private async loadSingleDepType(
     name: string,
     wanted: string,
@@ -160,7 +175,7 @@ export class Node {
     if (node) {
       this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
       node.usedEdges.add(this.edges[name]);
-      return true;
+      return node;
     }
 
     try {
@@ -173,13 +188,13 @@ export class Node {
       this.manager.set(node);
       // 子节点也要加载他自己的依赖
       await node.loadDeps();
-      return true;
+      return node;
     } catch (e: any) {
       // 如果是可选的，允许有错误发生
       if (!this.isOptionalEdge(edgeType)) {
         this.errors.push(e);
       }
-      return false;
+      return e as Error;
     }
   }
 

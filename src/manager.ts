@@ -3,18 +3,17 @@ import { depValid } from "./depValid";
 import type { Lockfile } from "./lockfile";
 import { Node, RootPkgJson, ProjectPkgJson } from "./node";
 
-type PackageNodes = Record<string, Node>;
-
 export interface ManagerOptions {
   registry: string;
   lockfile: Lockfile;
   legacyPeerDeps: boolean;
+  customFetch?: typeof fetch;
 }
 
 export class Manager {
   // { react: { '1.0.0': Node } }
-  public packages: Record<string, PackageNodes> = Object.create(null);
   private manifests = new Map<string, PackageData | Promise<PackageData>>();
+  public packages: Record<string, Record<string, Node>> = Object.create(null);
 
   constructor(public opts: ManagerOptions) {}
 
@@ -46,7 +45,7 @@ export class Manager {
     if (this.manifests.has(spec)) {
       return this.manifests.get(spec)!;
     } else {
-      const p = gpi(name, wanted).then((mani) => {
+      const p = gpi(name, wanted, this.opts).then((mani) => {
         this.manifests.set(spec, mani);
         return mani;
       });
@@ -102,19 +101,23 @@ export class Manager {
   async createNode(name: string, wanted: string) {
     let pkgJson;
     let resolved;
+    let integrity;
     const lockInfo = this.lockfile.tryGetNodeManifest(name, wanted);
 
     if (lockInfo) {
       pkgJson = lockInfo;
       resolved = lockInfo.resolved;
+      integrity = lockInfo.integrity;
     } else {
       pkgJson = await this.fetchManifest(name, wanted);
       resolved = (pkgJson as PackageData).dist.tarball;
+      integrity = (pkgJson as PackageData).dist.integrity;
     }
 
     return new Node({
       pkgJson,
       resolved,
+      integrity,
       manager: this,
       type: "package",
       legacyPeerDeps: this.opts.legacyPeerDeps,
@@ -124,6 +127,7 @@ export class Manager {
   createProjectNode(pkgJson: ProjectPkgJson) {
     return new Node({
       resolved: "",
+      integrity: "",
       manager: this,
       type: "project",
       pkgJson: pkgJson as any,
@@ -132,14 +136,16 @@ export class Manager {
   }
 
   createRootNode(
-    pkgJson: RootPkgJson,
-    workspaceJson: Record<string, ProjectPkgJson>
+    pkgJson?: RootPkgJson,
+    workspaceJson?: Record<string, ProjectPkgJson>
   ) {
-    if (!pkgJson.name) pkgJson.name = ".";
+    if (!pkgJson) pkgJson = Object.create(null);
+    if (!pkgJson!.name) pkgJson!.name = ".";
+
     const workspace = Object.create(null);
     for (const key in workspaceJson) {
-      if (key === pkgJson.name) {
-        throw new Error(`Project\'s name cannot be "${pkgJson.name}"`);
+      if (key === pkgJson!.name) {
+        throw new Error(`Project\'s name cannot be "${pkgJson!.name}"`);
       }
       workspaceJson[key].name = key;
       workspace[key] = this.createProjectNode(workspaceJson[key]);
@@ -148,6 +154,7 @@ export class Manager {
     return new Node({
       workspace,
       resolved: "",
+      integrity: "",
       manager: this,
       type: "root",
       pkgJson: pkgJson as any,

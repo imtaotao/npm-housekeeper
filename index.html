@@ -13,7 +13,7 @@
   Housekeeper.install({
     pkgJson: {
       dependencies: {
-        'create-react-app': "*",
+        'create-react-app': "latest",
         '@arco-design/web-react': '*',
         'vue': '^2.7.12'
       },
@@ -32,14 +32,21 @@
       },
     },
     lockData: localStorage.getItem('lockData'),
-  }).then(apis => {
+  }).then(async apis => {
     window.apis = apis;
-    const lockData = apis.lockfile.output();
     console.timeEnd('install')
-    localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
-    
     console.log(apis.node);
-    console.log(lockData);
+    
+    const setLockfile = () => {
+      const lockData = apis.lockfile.output();
+      localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
+      console.log(lockData);
+    }
+    setLockfile();
+
+    const reactNode = await apis.node.add('express')
+    console.log(reactNode);
+    setLockfile();
   })
 </script>
 </body>

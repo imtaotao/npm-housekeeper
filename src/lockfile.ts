@@ -9,10 +9,10 @@ export interface ImporterValue extends NodeDeps {
 
 export interface PackageValue extends NodeDeps {
   resolved: string;
+  integrity: string;
 }
 
 export interface LockfileJson {
-  registry: string;
   lockfileVersion: string;
   importers: Record<string, ImporterValue>;
   packages: Record<string, Record<string, PackageValue>>;
@@ -42,7 +42,6 @@ export class Lockfile {
 
   private canUse(json: LockfileJson, registry: string) {
     if (!json || typeof json !== "object") return false;
-    if (json.registry !== registry) return false;
     if (json.lockfileVersion !== this.version) return false;
     for (const p of ["importers", "packages"] as const) {
       if (!json[p] || typeof json[p] !== "object") return false;
@@ -103,8 +102,9 @@ export class Lockfile {
         packageValue = pkgVersions[version] = Object.create(null);
       }
 
-      // 保存下载地址
+      // 保存下载地址和信息摘要
       packageValue.resolved = targetNode.resolved;
+      packageValue.integrity = targetNode.integrity;
       this.recordDeps(targetNode, packageValue, false);
     });
   }
@@ -115,7 +115,6 @@ export class Lockfile {
     const json: LockfileJson = Object.create(null);
 
     json.lockfileVersion = this.version;
-    json.registry = manager.opts.registry;
     json.importers = Object.create(null);
     json.packages = Object.create(null);
 
