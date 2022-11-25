@@ -34,7 +34,6 @@ install({
     const lockData = apis.lockfile.output();
     localStorage.setItem("lockData", JSON.stringify(lockData, null, 2));
     console.log(lockData);
-    console.log(Object.keys(lockData.packages));
   };
   setLockfile();
 
