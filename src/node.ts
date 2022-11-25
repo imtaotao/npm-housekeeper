@@ -89,23 +89,19 @@ export class Node {
   async add(
     name: string,
     version = "latest",
-    edgeType: "prod" | "dev" | "peer" = "prod",
+    edgeType: EdgeType = "prod",
     force?: boolean
-  ): Promise<Node> {
+  ) {
     if (!force && !this.isTop()) {
       throw new Error("Only add dependencies to the top node");
     }
-    if (edgeType !== "prod" && edgeType !== "dev" && edgeType !== "peer") {
-      throw new TypeError(`Invalid dependency type "${edgeType}"`);
-    }
-
     const nodeOrErr = await this.loadSingleDepType(name, version, edgeType);
 
-    if (nodeOrErr instanceof Node) {
+    if (!nodeOrErr || nodeOrErr instanceof Node) {
       const prop = getDepPropByEdgeType(edgeType, true);
       if (!this.pkg[prop]) this.pkg[prop] = Object.create(null);
       this.pkg[prop]![name] = version;
-      return nodeOrErr as Node;
+      return nodeOrErr;
     } else {
       throw nodeOrErr;
     }
@@ -191,11 +187,16 @@ export class Node {
       await node.loadDeps();
       return node;
     } catch (e: any) {
+      console.warn(e);
+      delete this.edges[name];
+
       // If optional, allow errors to occur
-      if (!this.isOptionalEdge(edgeType)) {
+      if (this.isOptionalEdge(edgeType)) {
+        return null;
+      } else {
         this.errors.push(e);
+        return e as Error;
       }
-      return e as Error;
     }
   }
 

@@ -3,9 +3,9 @@ console.time("install");
 install({
   pkgJson: {
     dependencies: {
+      vue: "^2.7.12",
       "create-react-app": "latest",
       "@arco-design/web-react": "*",
-      vue: "^2.7.12",
     },
     workspace: {
       p1: {
@@ -15,8 +15,8 @@ install({
       },
       p2: {
         dependencies: {
-          vue: "^2.7.13",
           react: "*",
+          vue: "^2.7.13",
         },
       },
     },
