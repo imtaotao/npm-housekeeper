@@ -44,7 +44,7 @@ install({
   console.log(lockData);
 
    // Save lockfile
-  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
+  localStorage.setItem('lockData', JSON.stringify(lockData));
 })
 ```
 
@@ -61,7 +61,7 @@ install().then(async apis => {
 
   // Update lockfile data
   const lockData = apis.lockfile.output();
-  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
+  localStorage.setItem('lockData', JSON.stringify(lockData));
 })
 
 // If an error occurs, log errors
@@ -80,7 +80,7 @@ install().then(apis => {
 // Filter some packages
 install({
   ...
-  filter: (name, wanted) => name.startsWith("@types"), // Filter `@types/x`
+  filter: (name, wanted) => name.startsWith("@types/"), // Filter `@types/x`
 }).then(apis => {
   ...
 })
@@ -111,7 +111,7 @@ install().then(apis => {
 <!DOCTYPE html>
 <html lang="en">
 <body>
-  <script src="https://unpkg.com/butler/dist/npm-housekeeper.umd.js"></script>
+  <script src="https://unpkg.com/npm-housekeeper@latest/dist/housekeeper.umd.js"></script>
   <script>
     const { install } = window.Housekeeper;
     // ...

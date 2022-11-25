@@ -31,7 +31,7 @@ const isEmptyNode = (node: Node) => {
   return cache.get(node);
 };
 
-export function cropEmptyPkg(manager: Manager) {
+export function cropEmptyNodes(manager: Manager) {
   for (const name in manager.packages) {
     const pkgs = manager.packages[name];
 

@@ -76,6 +76,17 @@ export class Manager {
     }
   }
 
+  hasErrors() {
+    let e = false;
+    this.each((_n, _v, node) => {
+      if (node.hasError()) {
+        e = true;
+        return false;
+      }
+    })
+    return e;
+  }
+
   logErrors() {
     this.each((_n, _v, node) => node.logErrors());
   }
