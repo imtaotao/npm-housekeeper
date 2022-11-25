@@ -24,11 +24,7 @@ const pkgJson = {
 install({
   pkgJson,
   lockData: localStorage.getItem("lockData"),
-  filter: (name) => {
-    const nf = name.startsWith("@types");
-    nf && console.log(name);
-    return nf;
-  },
+  filter: (name) => name.startsWith("@types"),
 }).then(async (apis) => {
   globalThis.apis = apis;
   console.timeEnd("install");

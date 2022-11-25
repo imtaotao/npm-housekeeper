@@ -77,7 +77,7 @@ install().then(apis => {
   })
 })
 
-// Filter some packages (This can have a lasting effect on the lockfile)
+// Filter some packages
 install({
   ...
   filter: (name, wanted) => name.startsWith("@types"), // Filter `@types/x`

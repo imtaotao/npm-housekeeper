@@ -29,12 +29,12 @@ export interface RootPkgJson extends NodeDeps {
 }
 
 export interface Edge {
-  node: Node;
   type: EdgeType;
   link: boolean;
   name: string;
   wanted: string;
   parentNode: Node;
+  node?: Node;
   accept?: string;
 }
 
@@ -108,7 +108,13 @@ export class Node {
     if (!force && !this.isTop()) {
       throw new Error("Only add dependencies to the top node");
     }
-    const nodeOrErr = await this.loadSingleDepType(name, version, edgeType);
+    const accept = (this.pkg.acceptDependencies || {})[name];
+    const nodeOrErr = await this.loadSingleDepType(
+      name,
+      version,
+      edgeType,
+      accept
+    );
 
     if (!nodeOrErr || nodeOrErr instanceof Node) {
       const prop = getDepPropByEdgeType(edgeType, true);
@@ -163,14 +169,18 @@ export class Node {
   ) {
     if (!deps) return;
     const ls = [];
+    const ad = this.pkg.acceptDependencies || {};
+
     for (const [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
+      const accept = ad[name];
       if (typeof this.manager.opts.filter === "function") {
         if (this.manager.opts.filter(name, wanted)) {
+          this.edges[name] = this.createEdge(name, wanted, edgeType, accept);
           continue;
         }
       }
-      ls.push(this.loadSingleDepType(name, wanted, edgeType));
+      ls.push(this.loadSingleDepType(name, wanted, edgeType, accept));
     }
     return Promise.all(ls);
   }
@@ -179,16 +189,15 @@ export class Node {
   private async loadSingleDepType(
     name: string,
     wanted: string,
-    edgeType: EdgeType
+    edgeType: EdgeType,
+    accept?: string
   ) {
-    const ad = this.pkg.acceptDependencies || {};
     // Placeholder (may be an empty object if optional)
     this.edges[name] = Object.create(null) as any;
-    const accept = ad[name];
     const node = this.manager.get(name, wanted, this, accept);
 
     if (node) {
-      this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
+      this.edges[name] = this.createEdge(name, wanted, edgeType, accept, node);
       node.usedEdges.add(this.edges[name]);
       return node;
     }
@@ -198,7 +207,7 @@ export class Node {
       const searchWanted = version === null ? wanted : version;
       const node = await this.manager.createNode(name, searchWanted);
 
-      this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
+      this.edges[name] = this.createEdge(name, wanted, edgeType, accept, node);
       node.usedEdges.add(this.edges[name]);
       this.manager.set(node);
       // The child node also has to load his own dependencies
@@ -228,17 +237,18 @@ export class Node {
   }
 
   private createEdge(
-    node: Node,
+    name: string,
     wanted: string,
     edgeType: EdgeType,
-    accept?: string
+    accept?: string,
+    node?: Node
   ) {
     const edge: Edge = Object.create(null);
     edge.node = node;
+    edge.name = name;
     edge.type = edgeType;
     edge.accept = accept;
     edge.wanted = wanted;
-    edge.name = node.name;
     edge.parentNode = this;
     // All are links, we are mimicking the behavior of pnpm
     edge.link = true;

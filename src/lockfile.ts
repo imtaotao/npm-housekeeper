@@ -69,7 +69,7 @@ export class Lockfile {
         // Add to `peerDependencies`
         let peerDeps = obj["peerDependencies"];
         if (!peerDeps) peerDeps = obj["peerDependencies"] = Object.create(null);
-        if (!peerDeps![name]) peerDeps![name] = node.version;
+        if (!peerDeps![name]) peerDeps![name] = node ? node.version : wanted;
         // Record `meta`
         let peerMeta = obj[prop];
         if (!peerMeta) peerMeta = obj[prop] = Object.create(null);
@@ -77,7 +77,8 @@ export class Lockfile {
         peerMeta![name].optional = true;
       } else {
         if (!obj[prop]) obj[prop] = Object.create(null);
-        obj[prop]![name] = node.version;
+        // If filtered, there may be no node
+        obj[prop]![name] = node ? node.version : wanted;
       }
     }
   }
