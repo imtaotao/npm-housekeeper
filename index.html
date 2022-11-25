@@ -9,45 +9,9 @@
 <script src="https://unpkg.com/npm-housekeeper@latest/dist/housekeeper.umd.js"></script>
 <script src="http://127.0.0.1:8085/dist/housekeeper.umd.js"></script>
 <script>
-  console.time('install');
-  Housekeeper.install({
-    pkgJson: {
-      dependencies: {
-        'create-react-app': "latest",
-        '@arco-design/web-react': '*',
-        'vue': '^2.7.12'
-      },
-      workspace: {
-        p1: {
-          dependencies: {
-            'vue': '*',
-          },
-        },
-        p2: {
-          dependencies: {
-            'vue': '^2.7.13',
-            'react': '*',
-          },
-        },
-      },
-    },
-    lockData: localStorage.getItem('lockData'),
-  }).then(async apis => {
-    window.apis = apis;
-    console.timeEnd('install')
-    console.log(apis.node);
-    
-    const setLockfile = () => {
-      const lockData = apis.lockfile.output();
-      localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
-      console.log(lockData);
-    }
-    setLockfile();
-
-    const expressNode = await apis.node.add('express')
-    console.log(expressNode);
-    setLockfile();
-  })
+  globalThis.isNodeEnv = false;
+  globalThis.install = Housekeeper.install;
+  fetch('./dev/test.js').then(r => r.text()).then(eval);
 </script>
 </body>
 </html>
