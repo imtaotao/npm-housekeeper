@@ -45,7 +45,5 @@ install({
   console.log(expressNode);
   setLockfile();
 
-  if (isNodeEnv) {
-    debugger;
-  }
+  if (isNodeEnv) debugger;
 });

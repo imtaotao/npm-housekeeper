@@ -57,6 +57,14 @@ export class Lockfile {
       const { node, type, name, wanted } = targetNode.edges[key];
       const prop = getDepPropByEdgeType(type, false);
 
+      // Record the `wanted` of the project dependency
+      if (isImport) {
+        if (!(obj as ImporterValue).specifiers) {
+          (obj as ImporterValue).specifiers = Object.create(null);
+        }
+        (obj as ImporterValue).specifiers![name] = wanted;
+      }
+
       if (prop === "peerDependenciesMeta") {
         // Add to `peerDependencies`
         let peerDeps = obj["peerDependencies"];
@@ -70,14 +78,6 @@ export class Lockfile {
       } else {
         if (!obj[prop]) obj[prop] = Object.create(null);
         obj[prop]![name] = node.version;
-      }
-
-      // Record the `wanted` of the project dependency
-      if (isImport) {
-        if (!(obj as ImporterValue).specifiers) {
-          (obj as ImporterValue).specifiers = Object.create(null);
-        }
-        (obj as ImporterValue).specifiers![name] = wanted;
       }
     }
   }
