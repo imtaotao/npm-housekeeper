@@ -13,10 +13,6 @@ export interface InstallOptions {
 }
 
 export async function install(opts: InstallOptions = {}) {
-  opts.legacyPeerDeps = Boolean(opts.legacyPeerDeps);
-  opts.registry = opts.registry || "https://registry.npmjs.org";
-  if (!opts.registry.endsWith("/")) opts.registry += "/";
-
   const lockfile: Lockfile = new Lockfile({
     json: opts.lockData,
     rootNodeGetter: () => node,
@@ -27,7 +23,7 @@ export async function install(opts: InstallOptions = {}) {
     filter: opts.filter,
     registry: opts.registry,
     customFetch: opts.customFetch,
-    legacyPeerDeps: opts.legacyPeerDeps,
+    legacyPeerDeps: Boolean(opts.legacyPeerDeps),
   });
 
   const node = manager.createRootNode(opts.pkgJson, opts.pkgJson?.workspace);
