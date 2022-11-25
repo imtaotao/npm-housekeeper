@@ -49,9 +49,10 @@ install({
 ```
 
 
-### Add other deps
+### Other apis
 
 ```js
+// add other deps
 install().then(async apis => {
   // - `version` default is `latest`
   // - `depType` default is `prod`
@@ -62,11 +63,7 @@ install().then(async apis => {
   const lockData = apis.lockfile.output();
   localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
 })
-```
 
-### Other apis
-
-```js
 // If an error occurs, log errors
 install().then(apis => {
   apis.manager.logErrors();
@@ -92,21 +89,16 @@ install({
 
 ### Use in `nodeJs`
 
-`The first way`: pass in custom `fetch`.
-
 ```js
+// `The first way`: pass in custom `fetch`
 install({
   customFetch: require("node-fetch"),
 }).then(apis => {
   ...
 })
-```
 
-`The second way`: set the global `fetch`
-
-```js
+// `The second way`: set the global `fetch`
 globalThis.fetch = require("node-fetch");
-
 install().then(apis => {
   ...
 })
