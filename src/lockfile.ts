@@ -53,9 +53,21 @@ export class Lockfile {
     obj: ImporterValue | PackageValue,
     isImport: boolean
   ) {
+    const missEdges = new Set<string>();
+
     for (const key in targetNode.edges) {
       const { node, type, name, wanted } = targetNode.edges[key];
       const prop = getDepPropByEdgeType(type, false);
+
+      const set = (deps: Exclude<NodeDeps[keyof NodeDeps], undefined>) => {
+        if (node) {
+          deps[name] = node.version;
+        } else {
+          // If filtered, there may be no node
+          deps[name] = wanted;
+          missEdges.add(name);
+        }
+      };
 
       // Record the `wanted` of the project dependency
       if (isImport) {
@@ -69,16 +81,28 @@ export class Lockfile {
         // Add to `peerDependencies`
         let peerDeps = obj["peerDependencies"];
         if (!peerDeps) peerDeps = obj["peerDependencies"] = Object.create(null);
-        if (!peerDeps![name]) peerDeps![name] = node ? node.version : wanted;
-        // Record `meta`
+        if (!peerDeps![name]) set(peerDeps!);
+        // Record `meta`info
         let peerMeta = obj[prop];
         if (!peerMeta) peerMeta = obj[prop] = Object.create(null);
         if (!peerMeta![name]) peerMeta![name] = Object.create(null);
         peerMeta![name].optional = true;
       } else {
         if (!obj[prop]) obj[prop] = Object.create(null);
-        // If filtered, there may be no node
-        obj[prop]![name] = node ? node.version : wanted;
+        set(obj[prop]!);
+      }
+    }
+
+    const ad = targetNode.pkg.acceptDependencies;
+    if (ad && missEdges.size > 0) {
+      for (const edgeName of missEdges) {
+        const accept = ad[edgeName];
+        if (accept !== undefined) {
+          if (!obj["acceptDependencies"]) {
+            obj["acceptDependencies"] = Object.create(null);
+          }
+          obj["acceptDependencies"]![edgeName] = accept;
+        }
       }
     }
   }
