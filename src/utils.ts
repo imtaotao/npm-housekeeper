@@ -1,7 +1,7 @@
 import type { EdgeType } from "./node";
 
 export const isEmptyObject = (obj: Record<string, any>) => {
-  for (const k in obj) return false;
+  for (const _k in obj) return false;
   return true;
 };
 

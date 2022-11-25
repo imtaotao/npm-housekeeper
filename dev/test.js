@@ -1,26 +1,28 @@
 console.time("install");
 
-install({
-  pkgJson: {
-    dependencies: {
-      vue: "^2.7.12",
-      "create-react-app": "latest",
-      "@arco-design/web-react": "*",
-    },
-    workspace: {
-      p1: {
-        dependencies: {
-          vue: "*",
-        },
+const pkgJson = {
+  dependencies: {
+    vue: "^2.7.12",
+    "create-react-app": "latest",
+    "@arco-design/web-react": "*",
+  },
+  workspace: {
+    p1: {
+      dependencies: {
+        vue: "*",
       },
-      p2: {
-        dependencies: {
-          react: "*",
-          vue: "^2.7.13",
-        },
+    },
+    p2: {
+      dependencies: {
+        react: "*",
+        vue: "^2.7.13",
       },
     },
   },
+};
+
+install({
+  pkgJson,
   lockData: localStorage.getItem("lockData"),
 }).then(async (apis) => {
   globalThis.apis = apis;

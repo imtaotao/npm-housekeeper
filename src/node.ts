@@ -86,6 +86,19 @@ export class Node {
     return this.errors.length > 0;
   }
 
+  logErrors() {
+    for (let e of this.errors) {
+      if (typeof e === "string") {
+        e = `[${this.name}]: ${e}`;
+      } else if (e instanceof Error) {
+        try {
+          e.message = `[${this.name}]: ${e.message}`;
+        } catch (e) {}
+      }
+      console.error(e);
+    }
+  }
+
   async add(
     name: string,
     version = "latest",
@@ -187,7 +200,6 @@ export class Node {
       await node.loadDeps();
       return node;
     } catch (e: any) {
-      console.warn(e);
       delete this.edges[name];
 
       // If optional, allow errors to occur

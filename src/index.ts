@@ -11,14 +11,13 @@ export interface InstallOptions {
   lockData?: LockfileJson | string;
 }
 
-export async function install(opts: InstallOptions) {
+export async function install(opts: InstallOptions = {}) {
   opts.legacyPeerDeps = Boolean(opts.legacyPeerDeps);
   opts.registry = opts.registry || "https://registry.npmjs.org";
   if (!opts.registry.endsWith("/")) opts.registry += "/";
 
   const lockfile: Lockfile = new Lockfile({
     json: opts.lockData,
-    registry: opts.registry,
     rootNodeGetter: () => node,
   });
 

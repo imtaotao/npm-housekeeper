@@ -9,7 +9,7 @@ Build an ideal tree through `package.json` (cross-platform, can be used in `brow
 
 [Online test platform](https://imtaotao.github.io/npm-housekeeper/)
 
-### NPM
+### Usage
 
 ```js
 import { install } from 'npm-housekeeper';
@@ -37,47 +37,64 @@ install({
     },
   },
 }).then(async apis => {
+  const lockData = apis.lockfile.output(); // lockData is null when there is an error
+  console.log(lockData);
   console.log(apis.node); // root node
-
-  const setLockfile = () => {
-    const lockData = apis.lockfile.output();
-    localStorage.setItem('lockData', JSON.stringify(lockData, null, 2));
-    console.log(lockData);
-  }
-  setLockfile(); // set lockfile data
-
-  // add other deps
-  //  - version default is `latest`
-  //  - depType default is `prod`
-  const expressNode = await apis.node.add('express', 'latest', 'prod')
-  console.log(expressNode);
-  setLockfile(); // update lockfile data
+  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2)); // Save lockfile
 })
 ```
 
-### Use in `nodeJs`
 
-1. `The first way`: pass in custom `fetch`.
+### Add other deps
 
 ```js
-const fetch = require("node-fetch");
+install().then(async apis => {
+  //  - `version` default is `latest`
+  //  - `depType` default is `prod`
+  const expressNode = await apis.node.add('express', 'latest', 'prod')
+  console.log(expressNode);
+  const lockData = apis.lockfile.output();
+  localStorage.setItem('lockData', JSON.stringify(lockData, null, 2)); // Update lockfile data
+})
+```
 
+### Other apis
+
+```js
+// If an error occurs, log errors
+install().then(apis => {
+  apis.manager.logErrors();
+})
+
+// View all nodes
+install().then(apis => {
+  console.log(apis.manager.packages);
+  apis.manager.each((name, version, node) => {
+    ...
+  })
+})
+
+```
+
+
+### Use in `nodeJs`
+
+`The first way`: pass in custom `fetch`.
+
+```js
 install({
-  ...
-  customFetch: fetch,
+  customFetch: require("node-fetch"),
 }).then(apis => {
   ...
 })
 ```
 
-2. `The second way`: set the global `fetch`
+`The second way`: set the global `fetch`
 
 ```js
 globalThis.fetch = require("node-fetch");
 
-install({
-  ...
-}).then(apis => {
+install().then(apis => {
   ...
 })
 ```

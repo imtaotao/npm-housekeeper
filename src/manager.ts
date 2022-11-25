@@ -3,6 +3,12 @@ import { depValid } from "./depValid";
 import type { Lockfile } from "./lockfile";
 import { Node, RootPkgJson, ProjectPkgJson } from "./node";
 
+type EachCallback = (
+  pkgName: string,
+  version: string,
+  node: Node
+) => void | boolean;
+
 export interface ManagerOptions {
   registry: string;
   lockfile: Lockfile;
@@ -56,9 +62,7 @@ export class Manager {
     }
   }
 
-  each(
-    callback: (pkgName: string, version: string, node: Node) => void | boolean
-  ) {
+  each(callback: EachCallback) {
     let needBreak = false;
     for (const name in this.packages) {
       for (const version in this.packages[name]) {
@@ -71,6 +75,10 @@ export class Manager {
       }
       if (needBreak) break;
     }
+  }
+
+  logErrors() {
+    this.each((_n, _v, node) => node.logErrors());
   }
 
   // accept: '' => '*'
