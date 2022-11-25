@@ -59,11 +59,11 @@ export class Lockfile {
       const prop = getDepPropByEdgeType(type, false);
 
       if (prop === "peerDependenciesMeta") {
-        // 添加到 peerDependencies 中
+        // Add to `peerDependencies`
         let peerDeps = obj["peerDependencies"];
         if (!peerDeps) peerDeps = obj["peerDependencies"] = Object.create(null);
         if (!peerDeps![name]) peerDeps![name] = node.version;
-        // 记录 meta 信息
+        // Record `meta`
         let peerMeta = obj[prop];
         if (!peerMeta) peerMeta = obj[prop] = Object.create(null);
         if (!peerMeta![name]) peerMeta![name] = Object.create(null);
@@ -73,7 +73,7 @@ export class Lockfile {
         obj[prop]![name] = node.version;
       }
 
-      // 记录项目依赖的 wanted
+      // Record the `wanted` of the project dependency
       if (isImport) {
         if (!(obj as ImporterValue).specifiers) {
           (obj as ImporterValue).specifiers = Object.create(null);
@@ -102,7 +102,7 @@ export class Lockfile {
         packageValue = pkgVersions[version] = Object.create(null);
       }
 
-      // 保存下载地址和信息摘要
+      // Save download address and message summary
       packageValue.resolved = targetNode.resolved;
       packageValue.integrity = targetNode.integrity;
       this.recordDeps(targetNode, packageValue, false);
@@ -129,7 +129,14 @@ export class Lockfile {
   }
 
   // TODO: 对比 lockfile 发生的变化
-  diff(oldJson: LockfileJson, newJson: LockfileJson) {
+  diff(newJson: LockfileJson, oldJson = this.json) {
+    if (!oldJson) {
+      oldJson = {
+        packages: {},
+        importers: {},
+        lockfileVersion: this.version,
+      };
+    }
     // ...
   }
 
@@ -155,13 +162,15 @@ export class Lockfile {
     if (oldWanted) {
       try {
         if (oldWanted === wanted || semver.eq(oldWanted, wanted)) {
+          // If the new dependencies are in pkgJson `dependencies`,
+          // and the old ones are in lockfile `DevDependencies`,
+          // the current algorithm is not to match
           const lockDep = lockInfo[getDepPropByEdgeType(edgeType, true)];
-          // 如果新的包在 dependencies 中, 而 lock 文件中在 DevDependencies 中，现在的算法是不要匹配上
           if (!lockDep) return null;
           return (lockDep[name] as string) || null;
         }
       } catch (e) {
-        // semver 版本比较可能报错
+        // `semver` version comparison may report an error
         return null;
       }
     }

@@ -9,10 +9,11 @@ const valid = (
 ) => {
   if (typeof requested === "string") {
     try {
-      // '' 等于 '*'
+      // '' => '*'
       requested = getVersionInfo(requested || "*");
     } catch (err: any) {
-      // 如果暂时有不支持的规范，直接报错
+      // If there are temporarily unsupported specifications,
+      // directly report an error
       if (requestor) {
         err.dependency = child.name;
         err.requested = requested;
@@ -22,7 +23,6 @@ const valid = (
     }
   }
 
-  // 如果有手动写的，就可能有这种情况
   if (!requested) {
     if (requestor) {
       const err: any = new Error("Invalid dependency specifier");
@@ -38,12 +38,11 @@ const valid = (
       if (requested.fetchSpec === "*") {
         return true;
       }
-    // 其余的情况到 version 去校验
     case "version":
-      // 如果它是一个版本或一个除 '*' 以外的范围
+      // If it is a version or a range other than '*'
       return semver.satisfies(child.version, requested.fetchSpec, true);
     case "tag":
-      // 如果它是一个标签，我们只需验证它是否有一个 tarball
+      // If it is a tag, we just need to verify that it has a tarball
       return Boolean(child.resolved);
     default:
       break;

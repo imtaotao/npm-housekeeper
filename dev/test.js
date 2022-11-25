@@ -37,8 +37,8 @@ install({
   const expressNode = await apis.node.add("express");
   console.log(expressNode);
   setLockfile();
-  
+
   if (isNodeEnv) {
-    debugger
+    debugger;
   }
 });

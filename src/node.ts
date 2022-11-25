@@ -120,7 +120,7 @@ export class Node {
       peerDependencies: pd,
     } = this.pkg;
 
-    // 安装 peerDependencies
+    // install peerDependencies
     if (pd && !this.legacyPeerDeps) {
       const pm = this.pkg.peerDependenciesMeta || {};
       const peerOptional: Record<string, string> = {};
@@ -137,14 +137,14 @@ export class Node {
       ls.push(this.loadDepType(peerOptional, "peerOptional"));
     }
 
-    // 安装其他的依赖
+    // Install other dependencies
     ls.push(this.loadDepType(dependencies, "prod"));
     ls.push(this.loadDepType(optionalDependencies, "optional"));
-    // 只有 top 项目需要安装 devDependencies
+
+    // Only `topNode` require devDependencies to be installed
     if (this.isTop()) {
       ls.push(this.loadDepType(devDependencies, "dev"));
     }
-
     return Promise.all(ls);
   }
 
@@ -161,14 +161,15 @@ export class Node {
     return Promise.all(ls);
   }
 
-  // 这会强制更新 edge 节点
+  // This will force an update of the edge nodes
   private async loadSingleDepType(
     name: string,
     wanted: string,
     edgeType: EdgeType
   ) {
     const ad = this.pkg.acceptDependencies || {};
-    this.edges[name] = Object.create(null) as any; // 占位（如果是 optional 就可能是空对象）
+    // Placeholder (may be an empty object if optional)
+    this.edges[name] = Object.create(null) as any;
     const accept = ad[name];
     const node = this.manager.get(name, wanted, this, accept);
 
@@ -186,11 +187,11 @@ export class Node {
       this.edges[name] = this.createEdge(node, wanted, edgeType, accept);
       node.usedEdges.add(this.edges[name]);
       this.manager.set(node);
-      // 子节点也要加载他自己的依赖
+      // The child node also has to load his own dependencies
       await node.loadDeps();
       return node;
     } catch (e: any) {
-      // 如果是可选的，允许有错误发生
+      // If optional, allow errors to occur
       if (!this.isOptionalEdge(edgeType)) {
         this.errors.push(e);
       }
@@ -221,7 +222,8 @@ export class Node {
     edge.wanted = wanted;
     edge.name = node.name;
     edge.parentNode = this;
-    edge.link = true; // 所有的都是 link，我们是模仿 pnpm 的行为
+    // All are links, we are mimicking the behavior of pnpm
+    edge.link = true;
     return edge;
   }
 }

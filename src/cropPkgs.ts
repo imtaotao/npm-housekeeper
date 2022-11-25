@@ -8,7 +8,8 @@ const getTopParent = (node: Node, state: WeakSet<Node>): Node | null => {
   if (node.isTop()) return node;
   state.add(node);
   for (const edge of node.usedEdges) {
-    // 如果有回环，则代表循环依赖了，判断其他节点即可
+    // If there is a loop, it means that there is a circular dependency,
+    // and we only need to judge other nodes
     if (!state.has(edge.parentNode)) {
       const topNode = getTopParent(edge.parentNode, state);
       if (topNode) return topNode;
@@ -22,7 +23,8 @@ const isEmptyNode = (node: Node) => {
     if (node.usedEdges.size === 0) {
       cache.set(node, true);
     } else {
-      // 只要当前这个 node 被项目所依赖，就需要留下来
+      // As long as the current node is used by the `topNode`,
+      // it needs to stay
       cache.set(node, !getTopParent(node, new WeakSet()));
     }
   }

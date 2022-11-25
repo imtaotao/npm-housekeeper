@@ -17,5 +17,5 @@ globalThis.localStorage = {
   },
 };
 
-// 执行测试逻辑
+// Execute test logic
 require("./test");

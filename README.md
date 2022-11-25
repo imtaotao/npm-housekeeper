@@ -57,7 +57,7 @@ install({
 
 ### Use in `nodeJs`
 
-1. The first way: pass in custom `fetch`.
+1. `The first way`: pass in custom `fetch`.
 
 ```js
 const fetch = require("node-fetch");
@@ -70,7 +70,7 @@ install({
 })
 ```
 
-2. The second way: set the global `fetch`
+2. `The second way`: set the global `fetch`
 
 ```js
 globalThis.fetch = require("node-fetch");

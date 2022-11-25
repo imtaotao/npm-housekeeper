@@ -21,7 +21,9 @@ export class Manager {
     return this.opts.lockfile;
   }
 
-  // 对于已经生成的 node，里面有一些可能可以被当前这个 node 替代，要尽可能复用同一个
+  // For the generated nodes,
+  // some of them may be replaced by the current node,
+  // and the same one should be reused as much as possible
   private tryReplace(target: Node) {
     const nodes = this.packages[target.name];
     if (nodes) {
