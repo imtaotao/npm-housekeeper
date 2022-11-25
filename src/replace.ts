@@ -11,7 +11,6 @@ export function tryReplace(manager: Manager, target: Node) {
     const node = nodes[version];
     if (node === target) continue;
 
-    // TODO: 循环依赖的问题现在还没有清除干净
     for (const edge of node.usedEdges) {
       if (manager.satisfiedBy(target, edge.wanted, null, edge.accept)) {
         edge.node = target;

@@ -31,7 +31,7 @@
         },
       },
     },
-    // lockData: localStorage.getItem('lockData'),
+    lockData: localStorage.getItem('lockData'),
   }).then(apis => {
     window.apis = apis;
     const lockData = apis.lockfile.output();
@@ -40,18 +40,7 @@
     
     console.log(apis.node);
     console.log(lockData);
-    console.log(apis.manager.packages.vue);
-    console.log(Object.keys(apis.manager.packages));
   })
-</script>
-<script src="./data/c.js"></script>
-<script src="./data/n.js"></script>
-<script>
-  for (const k of n) {
-    if (!c.includes(k)) {
-      console.log('cache no', k);
-    }
-  }
 </script>
 </body>
 </html>

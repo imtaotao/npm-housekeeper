@@ -13,7 +13,6 @@ export interface PackageValue extends NodeDeps {
 
 export interface LockfileJson {
   registry: string;
-  legacyPeerDeps: boolean;
   lockfileVersion: string;
   importers: Record<string, ImporterValue>;
   packages: Record<string, Record<string, PackageValue>>;
@@ -21,7 +20,6 @@ export interface LockfileJson {
 
 interface LockfileOptions {
   registry: string;
-  legacyPeerDeps: boolean;
   json?: LockfileJson | string;
   rootNodeGetter: () => Node;
 }
@@ -37,55 +35,60 @@ export class Lockfile {
     const json = typeof opts.json === "string"
       ? JSON.parse(opts.json)
       : opts.json;
-    if (this.canUse(json, opts.registry, opts.legacyPeerDeps)) {
+    if (this.canUse(json, opts.registry)) {
       this.json = json;
     }
   }
 
-  private canUse(
-    json: LockfileJson,
-    registry: string,
-    legacyPeerDeps: boolean
-  ) {
+  private canUse(json: LockfileJson, registry: string) {
     if (!json || typeof json !== "object") return false;
-    for (const p of [
-      "registry",
-      "importers",
-      "packages",
-      "legacyPeerDeps",
-      "lockfileVersion",
-    ]) {
-      if (!(p in json)) return false;
-    }
     if (json.registry !== registry) return false;
-    if (json.legacyPeerDeps !== legacyPeerDeps) return false;
     if (json.lockfileVersion !== this.version) return false;
+    for (const p of ["importers", "packages"] as const) {
+      if (!json[p] || typeof json[p] !== "object") return false;
+    }
     return true;
+  }
+
+  private recordDeps(
+    targetNode: Node,
+    obj: ImporterValue | PackageValue,
+    isImport: boolean
+  ) {
+    for (const key in targetNode.edges) {
+      const { node, type, name, wanted } = targetNode.edges[key];
+      const prop = getDepPropByEdgeType(type, false);
+
+      if (prop === "peerDependenciesMeta") {
+        // 添加到 peerDependencies 中
+        let peerDeps = obj["peerDependencies"];
+        if (!peerDeps) peerDeps = obj["peerDependencies"] = Object.create(null);
+        if (!peerDeps![name]) peerDeps![name] = node.version;
+        // 记录 meta 信息
+        let peerMeta = obj[prop];
+        if (!peerMeta) peerMeta = obj[prop] = Object.create(null);
+        if (!peerMeta![name]) peerMeta![name] = Object.create(null);
+        peerMeta![name].optional = true;
+      } else {
+        if (!obj[prop]) obj[prop] = Object.create(null);
+        obj[prop]![name] = node.version;
+      }
+
+      // 记录项目依赖的 wanted
+      if (isImport) {
+        if (!(obj as ImporterValue).specifiers) {
+          (obj as ImporterValue).specifiers = Object.create(null);
+        }
+        (obj as ImporterValue).specifiers![name] = wanted;
+      }
+    }
   }
 
   private processTopNode(targetNode: Node, json: LockfileJson) {
     if (targetNode.isTop()) {
       const importerValue = (json.importers[targetNode.name] =
         Object.create(null));
-
-      for (const key in targetNode.edges) {
-        const { node, type, name, wanted } = targetNode.edges[key];
-        const prop = getDepPropByEdgeType(type, false);
-        // 依赖
-        if (prop === "peerDependenciesMeta") {
-          let peerMeta = importerValue[prop];
-          if (!peerMeta) peerMeta = importerValue[prop] = Object.create(null);
-          if (!peerMeta![name]) peerMeta![name] = Object.create(null);
-          peerMeta![name].optional = true;
-        } else {
-          if (!importerValue[prop]) importerValue[prop] = Object.create(null);
-          importerValue[prop]![name] = node.version;
-        }
-        // 范围选择的依赖版本
-        if (!importerValue.specifiers)
-          importerValue.specifiers = Object.create(null);
-        importerValue.specifiers![name] = wanted;
-      }
+      this.recordDeps(targetNode, importerValue, true);
     }
   }
 
@@ -102,21 +105,7 @@ export class Lockfile {
 
       // 保存下载地址
       packageValue.resolved = targetNode.resolved;
-
-      for (const key in targetNode.edges) {
-        const { node, type, name } = targetNode.edges[key];
-        const prop = getDepPropByEdgeType(type, false);
-        // 保存依赖版本
-        if (prop === "peerDependenciesMeta") {
-          let peerMeta = packageValue[prop];
-          if (!peerMeta) peerMeta = packageValue[prop] = Object.create(null);
-          if (!peerMeta![name]) peerMeta![name] = Object.create(null);
-          peerMeta![name].optional = true;
-        } else {
-          if (!packageValue[prop]) packageValue[prop] = Object.create(null);
-          packageValue[prop]![name] = node.version;
-        }
-      }
+      this.recordDeps(targetNode, packageValue, false);
     });
   }
 
@@ -127,7 +116,6 @@ export class Lockfile {
 
     json.lockfileVersion = this.version;
     json.registry = manager.opts.registry;
-    json.legacyPeerDeps = rootNode.legacyPeerDeps;
     json.importers = Object.create(null);
     json.packages = Object.create(null);
 

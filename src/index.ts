@@ -18,7 +18,6 @@ export async function install(opts: InstallOptions) {
   const lockfile: Lockfile = new Lockfile({
     json: opts.lockData,
     registry: opts.registry,
-    legacyPeerDeps: opts.legacyPeerDeps,
     rootNodeGetter: () => node,
   });
 
