@@ -66,17 +66,13 @@ export class Manager {
   }
 
   each(callback: EachCallback) {
-    let needBreak = false;
+    let cbRes: any = true;
     for (const name in this.packages) {
       for (const version in this.packages[name]) {
-        const node = this.packages[name][version];
-        const res = callback(name, version, node);
-        if (res === false) {
-          needBreak = true;
-          break;
-        }
+        cbRes = callback(name, version, this.packages[name][version]);
+        if (cbRes === false) break;
       }
-      if (needBreak) break;
+      if (cbRes === false) break;
     }
   }
 
