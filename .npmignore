@@ -5,7 +5,6 @@ src/
 .DS_Store
 .gitignore
 .npmignore
-index.html
 lockData.json
 rollup.config.js
 tsconfig.json

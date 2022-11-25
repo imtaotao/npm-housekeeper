@@ -89,10 +89,10 @@ export class Node {
   logErrors() {
     for (let e of this.errors) {
       if (typeof e === "string") {
-        e = `[${this.name}]: ${e}`;
+        e = `(${this.name}): ${e}`;
       } else if (e instanceof Error) {
         try {
-          e.message = `[${this.name}]: ${e.message}`;
+          e.message = `(${this.name}): ${e.message}`;
         } catch (e) {}
       }
       console.error(e);
@@ -166,7 +166,9 @@ export class Node {
     for (const [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
       if (typeof this.manager.opts.filter === "function") {
-        if (this.manager.opts.filter(name, wanted)) continue;
+        if (this.manager.opts.filter(name, wanted)) {
+          continue;
+        }
       }
       ls.push(this.loadSingleDepType(name, wanted, edgeType));
     }
