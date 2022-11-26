@@ -1,7 +1,7 @@
 import type { Manager } from "./manager";
-import { getDepPropByEdgeType } from "./utils";
+import { wt, isWs, getDepPropByEdgeType } from "./utils";
 
-export type NodeType = "root" | "project" | "package";
+export type NodeType = "workspace" | "package";
 export type EdgeType = "prod" | "dev" | "peer" | "peerOptional" | "optional";
 
 export interface NodeDeps {
@@ -18,17 +18,14 @@ export interface NodePkgJson extends NodeDeps {
   version: string;
 }
 
-export interface ProjectPkgJson extends NodeDeps {
+export interface WorkspaceJson extends NodeDeps {
   name?: string;
   version?: string;
-}
-
-export interface RootPkgJson extends NodeDeps {
-  name?: string;
-  workspace?: Record<string, ProjectPkgJson>;
+  resolved?: string;
 }
 
 export interface Edge {
+  ws: boolean;
   type: EdgeType;
   link: boolean;
   name: string;
@@ -45,7 +42,6 @@ export interface NodeOptions {
   manager: Manager;
   pkgJson: NodePkgJson;
   legacyPeerDeps: boolean;
-  workspace?: Record<string, Node>;
 }
 
 export class Node {
@@ -59,7 +55,6 @@ export class Node {
   public legacyPeerDeps: boolean;
   public usedEdges = new Set<Edge>();
   public errors: Array<Error | string> = [];
-  public workspace: Record<string, Node> | null;
   public edges: Record<string, Edge> = Object.create(null);
 
   constructor(opts: NodeOptions) {
@@ -70,12 +65,11 @@ export class Node {
     this.manager = opts.manager;
     this.resolved = opts.resolved;
     this.integrity = opts.integrity;
-    this.workspace = opts.workspace || null;
     this.legacyPeerDeps = opts.legacyPeerDeps;
   }
 
-  isTop() {
-    return this.type === "root" || this.type === "project";
+  isWorkspace() {
+    return this.type === "workspace";
   }
 
   isOptionalEdge(edgeType: EdgeType) {
@@ -105,8 +99,8 @@ export class Node {
     edgeType: EdgeType = "prod",
     force?: boolean
   ) {
-    if (!force && !this.isTop()) {
-      throw new Error("Only add dependencies to the top node");
+    if (!force && !this.isWorkspace()) {
+      throw new Error("Only add dependencies to the workspace node");
     }
     const accept = (this.pkg.acceptDependencies || {})[name];
     const nodeOrErr = await this.loadSingleDepType(
@@ -156,8 +150,8 @@ export class Node {
     ls.push(this.loadDepType(dependencies, "prod"));
     ls.push(this.loadDepType(optionalDependencies, "optional"));
 
-    // Only `topNode` require devDependencies to be installed
-    if (this.isTop()) {
+    // Only `workspaceNode` require devDependencies to be installed
+    if (this.isWorkspace()) {
       ls.push(this.loadDepType(devDependencies, "dev"));
     }
     return Promise.all(ls);
@@ -175,7 +169,7 @@ export class Node {
       if (!name || this.edges[name]) continue;
       const accept = ad[name];
       if (typeof this.manager.opts.filter === "function") {
-        if (this.manager.opts.filter(name, wanted)) {
+        if (this.manager.opts.filter(name, wanted, edgeType)) {
           this.edges[name] = this.createEdge(name, wanted, edgeType, accept);
           continue;
         }
@@ -192,42 +186,63 @@ export class Node {
     edgeType: EdgeType,
     accept?: string
   ) {
+    const isws = isWs(wanted);
+    if (isws && !this.isWorkspace()) {
+      const e = new Error(`Only workspace nodes can use "${wt}"`);
+      this.errors.push(e);
+      return e;
+    }
     // Placeholder (may be an empty object if optional)
     this.edges[name] = Object.create(null) as any;
-    const node = this.manager.get(name, wanted, this, accept);
+    const node = this.manager.tryGetReusableNode(name, wanted, this, accept);
 
     if (node) {
       this.edges[name] = this.createEdge(name, wanted, edgeType, accept, node);
       node.usedEdges.add(this.edges[name]);
       return node;
-    }
+    } else if (isws) {
+      const e = new Error(
+        `There are no available "${name}" nodes in workspace`
+      );
+      this.errors.push(e);
+      return e;
+    } else {
+      try {
+        const version = this.tryGetVersionInWorkspace(name, wanted, edgeType);
+        const searchWanted = version === null ? wanted : version;
+        const node = await this.manager.createNode(name, searchWanted);
 
-    try {
-      const version = this.tryGetVersionInTop(name, wanted, edgeType);
-      const searchWanted = version === null ? wanted : version;
-      const node = await this.manager.createNode(name, searchWanted);
-
-      this.edges[name] = this.createEdge(name, wanted, edgeType, accept, node);
-      node.usedEdges.add(this.edges[name]);
-      this.manager.set(node);
-      // The child node also has to load his own dependencies
-      await node.loadDeps();
-      return node;
-    } catch (e: any) {
-      delete this.edges[name];
-
-      // If optional, allow errors to occur
-      if (this.isOptionalEdge(edgeType)) {
-        return null;
-      } else {
-        this.errors.push(e);
-        return e as Error;
+        this.edges[name] = this.createEdge(
+          name,
+          wanted,
+          edgeType,
+          accept,
+          node
+        );
+        node.usedEdges.add(this.edges[name]);
+        this.manager.setReusableNode(node);
+        // The child node also has to load his own dependencies
+        await node.loadDeps();
+        return node;
+      } catch (e: any) {
+        delete this.edges[name];
+        // If optional, allow errors to occur
+        if (this.isOptionalEdge(edgeType)) {
+          return null;
+        } else {
+          this.errors.push(e);
+          return e as Error;
+        }
       }
     }
   }
 
-  private tryGetVersionInTop(name: string, wanted: string, edgeType: EdgeType) {
-    if (!this.isTop()) return null;
+  private tryGetVersionInWorkspace(
+    name: string,
+    wanted: string,
+    edgeType: EdgeType
+  ) {
+    if (!this.isWorkspace()) return null;
     return this.manager.lockfile.tryGetTopEdgeVersion(
       this.name,
       name,
@@ -250,6 +265,7 @@ export class Node {
     edge.accept = accept;
     edge.wanted = wanted;
     edge.parentNode = this;
+    edge.ws = isWs(wanted);
     // All are links, we are mimicking the behavior of pnpm
     edge.link = true;
     return edge;

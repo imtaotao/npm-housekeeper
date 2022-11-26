@@ -5,6 +5,10 @@ export const isEmptyObject = (obj: Record<string, any>) => {
   return true;
 };
 
+export const wt = "workspace:";
+export const isWs = (spec: string) => spec.startsWith(wt);
+export const getWsWanted = (spec: string) => spec.slice(wt.length);
+
 export const getDepPropByEdgeType = (edgeType: EdgeType, isGet: boolean) => {
   if (edgeType === "prod") return "dependencies";
   if (edgeType === "dev") return "devDependencies";

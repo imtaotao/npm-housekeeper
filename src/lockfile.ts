@@ -20,16 +20,16 @@ export interface LockfileJson {
 
 interface LockfileOptions {
   json?: LockfileJson | string;
-  rootNodeGetter: () => Node;
+  managerGetter: () => Manager;
 }
 
 export class Lockfile {
   public version = "1";
   private json?: LockfileJson;
-  private rootNodeGetter: () => Node;
+  private managerGetter: () => Manager;
 
   constructor(opts: LockfileOptions) {
-    this.rootNodeGetter = opts.rootNodeGetter;
+    this.managerGetter = opts.managerGetter;
     // prettier-ignore
     const json = typeof opts.json === "string"
       ? JSON.parse(opts.json)
@@ -56,8 +56,17 @@ export class Lockfile {
     const missEdges = new Set<string>();
 
     for (const key in targetNode.edges) {
-      const { node, type, name, wanted } = targetNode.edges[key];
+      const { ws, node, type, name, wanted } = targetNode.edges[key];
+      if (ws) continue; // TODO: ...
       const prop = getDepPropByEdgeType(type, false);
+
+      // Record the `wanted` of the project dependency
+      if (isImport) {
+        if (!(obj as ImporterValue).specifiers) {
+          (obj as ImporterValue).specifiers = Object.create(null);
+        }
+        (obj as ImporterValue).specifiers![name] = wanted;
+      }
 
       const set = (deps: Exclude<NodeDeps[keyof NodeDeps], undefined>) => {
         if (node) {
@@ -68,14 +77,6 @@ export class Lockfile {
           missEdges.add(name);
         }
       };
-
-      // Record the `wanted` of the project dependency
-      if (isImport) {
-        if (!(obj as ImporterValue).specifiers) {
-          (obj as ImporterValue).specifiers = Object.create(null);
-        }
-        (obj as ImporterValue).specifiers![name] = wanted;
-      }
 
       if (prop === "peerDependenciesMeta") {
         // Add to `peerDependencies`
@@ -107,21 +108,24 @@ export class Lockfile {
     }
   }
 
-  private processTopNode(targetNode: Node, json: LockfileJson) {
+  private processWorkspaceNode(targetNode: Node, json: LockfileJson) {
     if (targetNode.hasError()) {
+      console.error('Cannot output "lockData" when an error occurs');
       targetNode.logErrors();
       return true;
+    } else {
+      const importerValue = (json.importers[targetNode.name] =
+        Object.create(null));
+      this.recordDeps(targetNode, importerValue, true);
+      return false;
     }
-    const importerValue = (json.importers[targetNode.name] =
-      Object.create(null));
-    this.recordDeps(targetNode, importerValue, true);
-    return false;
   }
 
   private processPackageNodes(manager: Manager, json: LockfileJson) {
     let error = false;
     manager.each((name, version, targetNode) => {
       if (targetNode.hasError()) {
+        console.error('Cannot output "lockData" when an error occurs');
         targetNode.logErrors();
         error = true;
         return false;
@@ -141,39 +145,6 @@ export class Lockfile {
       this.recordDeps(targetNode, packageValue, false);
     });
     return error;
-  }
-
-  output() {
-    const rootNode = this.rootNodeGetter();
-    const { manager } = rootNode;
-    const json: LockfileJson = Object.create(null);
-
-    json.lockfileVersion = this.version;
-    json.importers = Object.create(null);
-    json.packages = Object.create(null);
-
-    // If there is an error, the lockfile cannot be generated
-    if (this.processTopNode(rootNode, json)) return null;
-    if (rootNode.workspace) {
-      for (const key in rootNode.workspace) {
-        if (this.processTopNode(rootNode.workspace[key], json)) {
-          return null;
-        }
-      }
-    }
-    return this.processPackageNodes(manager, json) ? null : json;
-  }
-
-  // TODO: 对比 lockfile 发生的变化
-  diff(newJson: LockfileJson, oldJson = this.json) {
-    if (!oldJson) {
-      oldJson = {
-        packages: {},
-        importers: {},
-        lockfileVersion: this.version,
-      };
-    }
-    // ...
   }
 
   tryGetNodeManifest(name: string, version: string) {
@@ -211,5 +182,31 @@ export class Lockfile {
       }
     }
     return null;
+  }
+
+  output() {
+    const manager = this.managerGetter();
+    const json: LockfileJson = Object.create(null);
+    json.lockfileVersion = this.version;
+    json.importers = Object.create(null);
+    json.packages = Object.create(null);
+    // If there is an error, the lockfile cannot be generated
+    if (this.processPackageNodes(manager, json)) return null;
+    for (const [name, node] of Object.entries(manager.workspace)) {
+      if (this.processWorkspaceNode(node, json)) return null;
+    }
+    return json;
+  }
+
+  // TODO: 对比 lockfile 发生的变化
+  diff(newJson: LockfileJson, oldJson = this.json) {
+    if (!oldJson) {
+      oldJson = {
+        packages: {},
+        importers: {},
+        lockfileVersion: this.version,
+      };
+    }
+    // ...
   }
 }

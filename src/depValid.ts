@@ -15,8 +15,6 @@ const valid = (
       // If there are temporarily unsupported specifications,
       // directly report an error
       if (requestor) {
-        err.dependency = child.name;
-        err.requested = requested;
         requestor.errors.push(err);
       }
       return false;
@@ -25,10 +23,7 @@ const valid = (
 
   if (!requested) {
     if (requestor) {
-      const err: any = new Error("Invalid dependency specifier");
-      err.dependency = child.name;
-      err.requested = requested;
-      requestor.errors.push(err);
+      requestor.errors.push(new Error("Invalid dependency specifier"));
     }
     return false;
   }
@@ -49,10 +44,7 @@ const valid = (
   }
 
   if (requestor) {
-    const err: any = new Error("Unsupported dependency type");
-    err.dependency = child.name;
-    err.requested = requested;
-    requestor.errors.push(err);
+    requestor.errors.push(new Error("Unsupported dependency type"));
   }
   return false;
 };

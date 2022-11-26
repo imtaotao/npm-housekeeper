@@ -1,7 +1,8 @@
 import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
 import type { Lockfile } from "./lockfile";
-import { Node, RootPkgJson, ProjectPkgJson } from "./node";
+import { isWs, getWsWanted } from "./utils";
+import { EdgeType, Node, WorkspaceJson } from "./node";
 
 type EachCallback = (
   pkgName: string,
@@ -9,7 +10,11 @@ type EachCallback = (
   node: Node
 ) => void | boolean;
 
-export type FilterType = (name: string, wanted: string) => boolean;
+export type FilterType = (
+  name: string,
+  wanted: string,
+  type: EdgeType
+) => boolean;
 
 export interface ManagerOptions {
   lockfile: Lockfile;
@@ -20,9 +25,10 @@ export interface ManagerOptions {
 }
 
 export class Manager {
+  public workspace: Record<string, Node> = Object.create(null);
+  public packages: Record<string, Record<string, Node>> = Object.create(null);
   // { react: { '1.0.0': Node } }
   private manifests = new Map<string, PackageData | Promise<PackageData>>();
-  public packages: Record<string, Record<string, Node>> = Object.create(null);
 
   constructor(public opts: ManagerOptions) {}
 
@@ -56,13 +62,18 @@ export class Manager {
     if (this.manifests.has(spec)) {
       return this.manifests.get(spec)!;
     } else {
-      const p = gpi(name, wanted, this.opts).then((mani) => {
+      const { registry, customFetch } = this.opts;
+      const p = gpi(name, wanted, { registry, customFetch }).then((mani) => {
         this.manifests.set(spec, mani);
         return mani;
       });
       this.manifests.set(spec, p);
       return p;
     }
+  }
+
+  get(name: string) {
+    return this.workspace[name] || null;
   }
 
   each(callback: EachCallback) {
@@ -76,18 +87,18 @@ export class Manager {
     }
   }
 
-  hasErrors() {
+  hasError() {
     let e = false;
     this.each((_n, _v, node) => {
       if (node.hasError()) {
         e = true;
         return false;
       }
-    })
+    });
     return e;
   }
 
-  logErrors() {
+  logError() {
     this.each((_n, _v, node) => node.logErrors());
   }
 
@@ -97,25 +108,44 @@ export class Manager {
     return depValid(node, wanted, accept, from);
   }
 
-  get(name: string, wanted: string, from: Node, accept?: string) {
-    const nodes = this.packages[name];
-    if (nodes) {
-      for (const version in nodes) {
-        const node = nodes[version];
+  tryGetReusableNode(
+    name: string,
+    wanted: string,
+    from: Node,
+    accept?: string
+  ) {
+    if (isWs(wanted)) {
+      wanted = getWsWanted(wanted);
+      const node = this.workspace[name];
+      if (node) {
         if (this.satisfiedBy(node, wanted, from, accept)) {
           return node;
+        }
+      }
+    } else {
+      const nodes = this.packages[name];
+      if (nodes) {
+        for (const version in nodes) {
+          const node = nodes[version];
+          if (this.satisfiedBy(node, wanted, from, accept)) {
+            return node;
+          }
         }
       }
     }
     return null;
   }
 
-  set(node: Node) {
-    if (!this.packages[node.name]) {
-      this.packages[node.name] = Object.create(null);
+  setReusableNode(node: Node) {
+    if (node.isWorkspace()) {
+      this.workspace[node.name] = node;
+    } else {
+      if (!this.packages[node.name]) {
+        this.packages[node.name] = Object.create(null);
+      }
+      this.tryReplace(node);
+      this.packages[node.name][node.version] = node;
     }
-    this.tryReplace(node);
-    this.packages[node.name][node.version] = node;
   }
 
   async createNode(name: string, wanted: string) {
@@ -144,41 +174,14 @@ export class Manager {
     });
   }
 
-  createProjectNode(pkgJson: ProjectPkgJson) {
+  createWorkspaceNode(pkgJson: WorkspaceJson) {
     return new Node({
-      resolved: "",
       integrity: "",
       manager: this,
-      type: "project",
-      pkgJson: pkgJson as any,
+      type: "workspace",
+      resolved: pkgJson.resolved || "",
       legacyPeerDeps: this.opts.legacyPeerDeps,
-    });
-  }
-
-  createRootNode(
-    pkgJson?: RootPkgJson,
-    workspaceJson?: Record<string, ProjectPkgJson>
-  ) {
-    if (!pkgJson) pkgJson = Object.create(null);
-    if (!pkgJson!.name) pkgJson!.name = ".";
-
-    const workspace = Object.create(null);
-    for (const key in workspaceJson) {
-      if (key === pkgJson!.name) {
-        throw new Error(`Project\'s name cannot be "${pkgJson!.name}"`);
-      }
-      workspaceJson[key].name = key;
-      workspace[key] = this.createProjectNode(workspaceJson[key]);
-    }
-
-    return new Node({
-      workspace,
-      resolved: "",
-      integrity: "",
-      manager: this,
-      type: "root",
-      pkgJson: pkgJson as any,
-      legacyPeerDeps: this.opts.legacyPeerDeps,
+      pkgJson: pkgJson as Required<WorkspaceJson>,
     });
   }
 }
