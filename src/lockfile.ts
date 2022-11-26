@@ -1,5 +1,5 @@
 import * as semver from "esm-semver";
-import { getDepPropByEdgeType } from "./utils";
+import { getDepPropByEdgeType, getWsWanted } from "./utils";
 import type { Manager } from "./manager";
 import type { Node, EdgeType, NodeDeps } from "./node";
 
@@ -57,15 +57,18 @@ export class Lockfile {
 
     for (const key in targetNode.edges) {
       const { ws, node, type, name, wanted } = targetNode.edges[key];
+      // A dependency specified by `workspace:x` that does not need to be documented in the lock file.
+      // When a package is released in workspace, we assume they have handled the dependent version themselves
+      // Perhaps we can provide the api to do it for them.
       if (ws) continue;
-      const prop = getDepPropByEdgeType(type, false);
 
       // Record the `wanted` of the project dependency
       if (isImport) {
-        if (!(obj as ImporterValue).specifiers) {
-          (obj as ImporterValue).specifiers = Object.create(null);
+        let specifiers = (obj as ImporterValue).specifiers;
+        if (!specifiers) {
+          specifiers = (obj as ImporterValue).specifiers = Object.create(null);
         }
-        (obj as ImporterValue).specifiers![name] = wanted;
+        specifiers![name] = wanted;
       }
 
       const set = (deps: Exclude<NodeDeps[keyof NodeDeps], undefined>) => {
@@ -77,6 +80,8 @@ export class Lockfile {
           missEdges.add(name);
         }
       };
+
+      const prop = getDepPropByEdgeType(type, false);
 
       if (prop === "peerDependenciesMeta") {
         // Add to `peerDependencies`
