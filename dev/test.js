@@ -26,8 +26,8 @@ install({
   lockData: localStorage.getItem("lockData"),
   filter: (name) => name.startsWith("@types/"),
 }).then(async (manager) => {
-  globalThis.manager = manager;
   console.timeEnd("install");
+  globalThis.manager = manager;
 
   const setLockfile = () => {
     if (manager.hasError()) {

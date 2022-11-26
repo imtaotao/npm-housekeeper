@@ -57,7 +57,7 @@ export class Lockfile {
 
     for (const key in targetNode.edges) {
       const { ws, node, type, name, wanted } = targetNode.edges[key];
-      if (ws) continue; // TODO: ...
+      if (ws) continue;
       const prop = getDepPropByEdgeType(type, false);
 
       // Record the `wanted` of the project dependency
@@ -155,7 +155,7 @@ export class Lockfile {
     return { name, version, ...data };
   }
 
-  tryGetTopEdgeVersion(
+  tryGetEdgeVersion(
     pname: string,
     name: string,
     wanted: string,

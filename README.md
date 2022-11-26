@@ -18,33 +18,36 @@ install({
   legacyPeerDeps: false, // default value `false`
   registry: 'https://registry.npmjs.org', // default value `https://registry.npmjs.org` 
   lockData: localStorage.getItem('lockData'), // set lockfile data
-  pkgJson: { // default value `{}`
-    dependencies: {
-      'create-react-app': "*",
-      '@arco-design/web-react': '*',
-    },
-    workspace: {
-      p1: {
-        dependencies: {
-          'vue': '*',
-        },
+  workspace: {
+    '.': {
+      dependencies: {
+        'create-react-app': "*",
+        '@arco-design/web-react': '*',
       },
-      p2: {
-        dependencies: {
-          'react': '*',
-        },
+    },
+    p1: {
+      dependencies: {
+        'p2': 'workspce:*', // Specify other package in workspace
+        'vue': '*',
+      },
+    },
+    p2: {
+      dependencies: {
+        'react': '*',
       },
     },
   },
-}).then(async apis => {
-  console.log(apis.node); // root node
+}).then(async manager => {
+  if (manager.hasError()) {
+    manager.logError();
+  } else {
+    // lockData is null when there is an error
+    const lockData = manager.lockfile.output();
+    console.log(lockData);
 
-  // lockData is null when there is an error
-  const lockData = apis.lockfile.output();
-  console.log(lockData);
-
-   // Save lockfile
-  localStorage.setItem('lockData', JSON.stringify(lockData));
+    // Save lockfile
+    localStorage.setItem("lockData", JSON.stringify(lockData));
+  }
 })
 ```
 
@@ -53,10 +56,11 @@ install({
 
 ```js
 // add other deps
-install().then(async apis => {
+install().then(async manager => {
   // - `version` default is `latest`
   // - `depType` default is `prod`
-  const expressNode = await apis.node.add('express', 'latest', 'prod')
+  const pkgNode = manager.get('pkgName');
+  const expressNode = await pkgNode.add('express', 'latest', 'prod');
   console.log(expressNode);
 
   // Update lockfile data
@@ -65,23 +69,25 @@ install().then(async apis => {
 })
 
 // If an error occurs, log errors
-install().then(apis => {
-  apis.manager.logErrors();
+install().then(manager => {
+  if (manager.hasError()) {
+    manager.logError();
+  }
 })
 
 // View all nodes
-install().then(apis => {
-  console.log(apis.manager.packages);
-  apis.manager.each((name, version, node) => {
+install().then(manager => {
+  console.log(manager.packages);
+  manager.each((name, version, node) => {
     ...
   })
 })
 
 // Filter some packages
 install({
-  ...
-  filter: (name, wanted) => name.startsWith("@types/"), // Filter `@types/x`
-}).then(apis => {
+  filter: (name, wanted, edgeType) => edgeType === 'dev', // Filter `devDependencies`
+  filter: (name, wanted, edgeType) => name.startsWith("@types/"), // Filter `@types/x`
+}).then(manager => {
   ...
 })
 ```
@@ -93,13 +99,13 @@ install({
 // `The first way`: pass in custom `fetch`
 install({
   customFetch: require("node-fetch"),
-}).then(apis => {
+}).then(manager => {
   ...
 })
 
 // `The second way`: set the global `fetch`
 globalThis.fetch = require("node-fetch");
-install().then(apis => {
+install().then(manager => {
   ...
 })
 ```

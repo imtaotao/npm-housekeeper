@@ -1,5 +1,5 @@
 import type { Manager } from "./manager";
-import { wt, isWs, getDepPropByEdgeType } from "./utils";
+import { wf, isWs, getDepPropByEdgeType } from "./utils";
 
 export type NodeType = "workspace" | "package";
 export type EdgeType = "prod" | "dev" | "peer" | "peerOptional" | "optional";
@@ -188,7 +188,7 @@ export class Node {
   ) {
     const isws = isWs(wanted);
     if (isws && !this.isWorkspace()) {
-      const e = new Error(`Only workspace nodes can use "${wt}"`);
+      const e = new Error(`Only workspace nodes can use "${wf}"`);
       this.errors.push(e);
       return e;
     }
@@ -243,7 +243,7 @@ export class Node {
     edgeType: EdgeType
   ) {
     if (!this.isWorkspace()) return null;
-    return this.manager.lockfile.tryGetTopEdgeVersion(
+    return this.manager.lockfile.tryGetEdgeVersion(
       this.name,
       name,
       wanted,
