@@ -4,11 +4,10 @@ Api for use in `nodeJs`
 const path = require("path");
 const { Installer } = require('npm-housekeeper/lib');
 
-const options = {
+new Installer({
+  // Default value is `path.resolve(os.homedir(), ".housekeeper")`
   cacheDir: path.resolve(process.cwd(), "./_node_modules/.cache"),
-}
-
-new Installer(options)
+})
   .start()
   .then(successful => {
     console.log(successful);
