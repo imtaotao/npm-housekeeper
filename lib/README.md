@@ -8,7 +8,7 @@ new Installer({
   // Default value is `path.resolve(os.homedir(), ".housekeeper")`
   cacheDir: path.resolve(process.cwd(), "./_node_modules/.cache"),
 })
-  .start()
+  .startInstall()
   .then(successful => {
     console.log(successful);
   });
