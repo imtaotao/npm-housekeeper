@@ -1,14 +1,14 @@
 {
   "name": "npm-housekeeper",
-  "version": "0.0.1-beta.15",
+  "version": "0.0.1-beta.16",
   "description": "Generate a dependency tree",
-  "main": "dist/tree.cjs.js",
-  "module": "dist/tree.esm-bundler.js",
+  "main": "dist/housekeeper.cjs",
+  "module": "dist/housekeeper.esm-bundler.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "rollup --config",
     "dev": "http-server -p 8085 ./ -o dev/b.html",
-    "format": "prettier --write --parser typescript \"(src|dev|dist|tests)/**/*.(js|ts?(x))\""
+    "format": "prettier --write --parser typescript \"((src|dev|dist|tests)/**/*|*).(js|ts?(x))\""
   },
   "author": "imtaotao",
   "keywords": [

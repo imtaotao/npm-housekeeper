@@ -10,7 +10,7 @@
     "lib": ["es6", "dom"],
     "moduleResolution": "node",
     "allowJs": true,
-    "sourceMap": true,
+    "sourceMap": false,
     "declaration": true,
     "noImplicitAny": true,
     "esModuleInterop": true
