@@ -213,7 +213,10 @@ export class Lockfile {
   // Get the packages that need to be added or deleted
   diff(newJson: LockfileJson, oldJson = this.json) {
     const mark = Object.create(null);
-    const oldPackages = oldJson ? oldJson.packages : Object.create(null);
+    // prettier-ignore
+    const oldPackages = oldJson && this.canUse(oldJson)
+      ? oldJson.packages
+      : Object.create(null);
 
     const traverse = (lp: Packages, rp: Packages) => {
       const set: Packages = Object.create(null);

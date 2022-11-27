@@ -1,7 +1,5 @@
 console.time("install");
 
-const ks = Object.keys;
-
 install({
   workspace: {
     ".": {
