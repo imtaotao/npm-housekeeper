@@ -8,7 +8,7 @@
   "scripts": {
     "build": "rollup --config",
     "dev": "http-server -p 8085 ./ -o dev/b.html",
-    "format": "prettier --write --parser typescript \"((src|dev|dist|tests)/**/*|*).(js|ts?(x))\""
+    "format": "prettier --write --parser typescript \"(src|lib|dev|dist|tests)/**/*.(js|ts?(x))\""
   },
   "author": "imtaotao",
   "keywords": [
