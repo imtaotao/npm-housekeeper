@@ -37,14 +37,13 @@ install({
       },
     },
   },
-}).then(async manager => {
+}).then(manager => {
   if (manager.hasError()) {
     manager.logError();
   } else {
     // lockData is null when there is an error
     const lockData = manager.lockfile.output();
     console.log(lockData);
-
     // Save lockfile
     localStorage.setItem("lockData", JSON.stringify(lockData));
   }
@@ -89,6 +88,13 @@ install({
   filter: (name, wanted, edgeType) => name.startsWith("@types/"), // Filter `@types/x`
 }).then(manager => {
   ...
+})
+
+// Get the packages that need to be added or deleted
+install().then(manager => {
+  const lockData = manager.lockfile.output();
+  const diffData = manager.lockfile.diff(lockData);
+  console.log(diffData);
 })
 ```
 

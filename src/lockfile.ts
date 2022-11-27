@@ -12,34 +12,30 @@ export interface PackageValue extends NodeDeps {
   integrity: string;
 }
 
+export type Packages = Record<string, Record<string, PackageValue>>;
+
 export interface LockfileJson {
   lockfileVersion: string;
   importers: Record<string, ImporterValue>;
-  packages: Record<string, Record<string, PackageValue>>;
+  packages: Packages;
 }
 
 interface LockfileOptions {
-  json?: LockfileJson | string;
   managerGetter: () => Manager;
+  json?: LockfileJson | string;
 }
 
 export class Lockfile {
   public version = "1";
-  private json?: LockfileJson;
+  public json?: LockfileJson;
   private managerGetter: () => Manager;
 
   constructor(opts: LockfileOptions) {
     this.managerGetter = opts.managerGetter;
-    // prettier-ignore
-    const json = typeof opts.json === "string"
-      ? JSON.parse(opts.json)
-      : opts.json;
-    if (this.canUse(json)) {
-      this.json = json;
-    }
+    this.set(opts.json);
   }
 
-  private canUse(json: LockfileJson) {
+  private canUse(json?: LockfileJson) {
     if (!json || typeof json !== "object") return false;
     if (json.lockfileVersion !== this.version) return false;
     for (const p of ["importers", "packages"] as const) {
@@ -189,6 +185,17 @@ export class Lockfile {
     return null;
   }
 
+  set(json?: LockfileJson | string) {
+    if (typeof json === "string") {
+      json = JSON.parse(json) as LockfileJson;
+    }
+    if (this.canUse(json)) {
+      this.json = json;
+      return true;
+    }
+    return false;
+  }
+
   output() {
     const manager = this.managerGetter();
     const json: LockfileJson = Object.create(null);
@@ -197,21 +204,38 @@ export class Lockfile {
     json.packages = Object.create(null);
     // If there is an error, the lockfile cannot be generated
     if (this.processPackageNodes(manager, json)) return null;
-    for (const [name, node] of Object.entries(manager.workspace)) {
+    for (const [_n, node] of Object.entries(manager.workspace)) {
       if (this.processWorkspaceNode(node, json)) return null;
     }
     return json;
   }
 
-  // TODO: 对比 lockfile 发生的变化
+  // Get the packages that need to be added or deleted
   diff(newJson: LockfileJson, oldJson = this.json) {
-    if (!oldJson) {
-      oldJson = {
-        packages: {},
-        importers: {},
-        lockfileVersion: this.version,
-      };
-    }
-    // ...
+    const mark = Object.create(null);
+    const oldPackages = oldJson ? oldJson.packages : Object.create(null);
+
+    const traverse = (lp: Packages, rp: Packages) => {
+      const set: Packages = Object.create(null);
+      for (const name in lp) {
+        if (lp[name]) {
+          for (const version in lp[name]) {
+            const spec = `${name}@${version}`;
+            if (mark[spec]) continue;
+            mark[spec] = true;
+            if (!rp[name] || !rp[name][version]) {
+              if (!set[name]) set[name] = Object.create(null);
+              set[name][version] = lp[name][version];
+            }
+          }
+        }
+      }
+      return set;
+    };
+
+    return {
+      add: traverse(newJson.packages, oldPackages),
+      remove: traverse(oldPackages, newJson.packages),
+    };
   }
 }

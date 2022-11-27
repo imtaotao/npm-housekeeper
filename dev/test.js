@@ -1,5 +1,7 @@
 console.time("install");
 
+const ks = Object.keys;
+
 install({
   workspace: {
     ".": {
@@ -34,8 +36,12 @@ install({
       manager.logError();
     } else {
       const lockData = manager.lockfile.output();
-      localStorage.setItem("lockData", JSON.stringify(lockData, null, 2));
+      const diffData = manager.lockfile.diff(lockData);
       console.log(lockData);
+      console.log(diffData);
+
+      manager.lockfile.set(lockData);
+      localStorage.setItem("lockData", JSON.stringify(lockData, null, 2));
     }
   };
   setLockfile();
