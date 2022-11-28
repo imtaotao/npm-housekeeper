@@ -15,9 +15,9 @@ Build an ideal tree through `package.json` (cross-platform, can be used in `brow
 import { install } from 'npm-housekeeper';
 
 install({
-  legacyPeerDeps: false, // default value `false`
-  registry: 'https://registry.npmjs.org', // default value `https://registry.npmjs.org` 
-  lockData: localStorage.getItem('lockData'), // set lockfile data
+  legacyPeerDeps: false, // Default value `false`
+  registry: 'https://registry.npmjs.org', // Default value `https://registry.npmjs.org` 
+  lockData: localStorage.getItem('lockData'), // Set lockfile data
   workspace: {
     '.': {
       dependencies: {
@@ -41,7 +41,7 @@ install({
   if (manager.hasError()) {
     manager.logError();
   } else {
-    // lockData is null when there is an error
+    // `lockData` is null when there is an error
     const lockData = manager.lockfile.output();
     console.log(lockData);
     // Save lockfile
@@ -54,7 +54,7 @@ install({
 ### Other apis
 
 ```js
-// add other deps
+// Add other deps
 install().then(async manager => {
   // - `version` default is `latest`
   // - `depType` default is `prod`
@@ -100,6 +100,8 @@ install().then(manager => {
 
 
 ### Use in `nodeJs`
+
+[Api used in nodejs](./lib)
 
 ```js
 // `The first way`: pass in custom `fetch`
