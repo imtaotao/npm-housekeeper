@@ -39,6 +39,7 @@ export interface Edge {
 
 export interface NodeOptions {
   type: NodeType;
+  hasBin: boolean;
   resolved: string;
   integrity: string;
   manager: Manager;
@@ -64,8 +65,8 @@ export class Node {
     this.pkg = opts.pkgJson;
     this.name = opts.pkgJson.name;
     this.version = opts.pkgJson.version;
-    this.hasBin = Boolean(opts.pkgJson.bin);
     this.type = opts.type;
+    this.hasBin = opts.hasBin;
     this.manager = opts.manager;
     this.resolved = opts.resolved;
     this.integrity = opts.integrity;

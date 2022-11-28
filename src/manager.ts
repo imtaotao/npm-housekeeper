@@ -150,6 +150,7 @@ export class Manager {
 
   async createNode(name: string, wanted: string) {
     let pkgJson;
+    let hasBin;
     let resolved;
     let integrity;
     const lockInfo = this.lockfile.tryGetNodeManifest(name, wanted);
@@ -158,13 +159,16 @@ export class Manager {
       pkgJson = lockInfo;
       resolved = lockInfo.resolved;
       integrity = lockInfo.integrity;
+      hasBin = Boolean(lockInfo.hasBin);
     } else {
       pkgJson = await this.fetchManifest(name, wanted);
       resolved = (pkgJson as PackageData).dist.tarball;
       integrity = (pkgJson as PackageData).dist.integrity;
+      hasBin = Boolean((pkgJson as PackageData).bin);
     }
 
     return new Node({
+      hasBin,
       pkgJson,
       resolved,
       integrity,
@@ -179,6 +183,7 @@ export class Manager {
       integrity: "",
       manager: this,
       type: "workspace",
+      hasBin: Boolean(pkgJson.bin),
       resolved: pkgJson.resolved || "",
       legacyPeerDeps: this.opts.legacyPeerDeps,
       pkgJson: pkgJson as Required<WorkspaceJson>,
