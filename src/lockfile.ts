@@ -1,5 +1,5 @@
 import * as semver from "esm-semver";
-import { getDepPropByEdgeType, getWsWanted } from "./utils";
+import { getDepPropByEdgeType } from "./utils";
 import type { Manager } from "./manager";
 import type { Node, EdgeType, NodeDeps } from "./node";
 
@@ -10,6 +10,7 @@ export interface ImporterValue extends NodeDeps {
 export interface PackageValue extends NodeDeps {
   resolved: string;
   integrity: string;
+  hasBin?: boolean;
 }
 
 export type Packages = Record<string, Record<string, PackageValue>>;
@@ -143,6 +144,9 @@ export class Lockfile {
       // Save download address and message summary
       packageValue.resolved = targetNode.resolved;
       packageValue.integrity = targetNode.integrity;
+      if (targetNode.hasBin) {
+        packageValue.hasBin = targetNode.hasBin;
+      }
       this.recordDeps(targetNode, packageValue, false);
     });
     return error;

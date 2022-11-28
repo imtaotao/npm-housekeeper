@@ -1,6 +1,5 @@
 .vscode/
 node_modules/
-_node_modules/
 dist/
 .DS_Store
 lockData.json

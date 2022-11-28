@@ -1,8 +1,6 @@
 .vscode/
 dev/
 node_modules/
-_node_modules/
-lib/
 src/
 .DS_Store
 .gitignore

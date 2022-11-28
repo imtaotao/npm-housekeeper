@@ -16,12 +16,14 @@ export interface NodeDeps {
 export interface NodePkgJson extends NodeDeps {
   name: string;
   version: string;
+  bin?: string | Record<string, string>;
 }
 
 export interface WorkspaceJson extends NodeDeps {
   name?: string;
   version?: string;
   resolved?: string;
+  bin?: string | Record<string, string>;
 }
 
 export interface Edge {
@@ -49,6 +51,7 @@ export class Node {
   public type: NodeType;
   public pkg: NodePkgJson;
   public version: string;
+  public hasBin: boolean;
   public manager: Manager;
   public resolved: string;
   public integrity: string;
@@ -61,6 +64,7 @@ export class Node {
     this.pkg = opts.pkgJson;
     this.name = opts.pkgJson.name;
     this.version = opts.pkgJson.version;
+    this.hasBin = Boolean(opts.pkgJson.bin);
     this.type = opts.type;
     this.manager = opts.manager;
     this.resolved = opts.resolved;
