@@ -88,6 +88,11 @@ export class Manager {
   }
 
   hasError() {
+    for (const k in this.workspace) {
+      if (this.workspace[k].hasError()) {
+        return true;
+      }
+    }
     let e = false;
     this.each((_n, _v, node) => {
       if (node.hasError()) {
@@ -99,6 +104,9 @@ export class Manager {
   }
 
   logError() {
+    for (const k in this.workspace) {
+      this.workspace[k].logErrors();
+    }
     this.each((_n, _v, node) => node.logErrors());
   }
 
