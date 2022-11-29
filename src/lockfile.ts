@@ -215,7 +215,11 @@ export class Lockfile {
   }
 
   // Get the packages that need to be added or deleted
-  diff(newJson: LockfileJson, oldJson = this.json) {
+  diff(
+    newJson: LockfileJson,
+    type: "all" | "add" | "remove" = "all",
+    oldJson = this.json
+  ) {
     const mark = Object.create(null);
     // prettier-ignore
     const oldPackages = oldJson && this.canUse(oldJson)
@@ -240,9 +244,14 @@ export class Lockfile {
       return set;
     };
 
-    return {
-      add: traverse(newJson.packages, oldPackages),
-      remove: traverse(oldPackages, newJson.packages),
-    };
+    const add =
+      type === "all" || type === "add"
+        ? traverse(newJson.packages, oldPackages)
+        : {};
+    const remove =
+      type === "all" || type === "remove"
+        ? traverse(oldPackages, newJson.packages)
+        : {};
+    return { add, remove };
   }
 }
