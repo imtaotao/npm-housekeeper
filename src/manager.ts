@@ -123,17 +123,20 @@ export class Manager {
   //  1. 如果有新增的包，lock 的 resolutions 里面没有，这里取空，还是会取原来的版本（bug）
   //    1.1 解决办法需要 merge 或者删掉 lock 文件
   //    2.2 merge 的好处是不需要删掉 lock 文件，这对于在浏览器里面使用很有用
-  //  2. 如果是已经存在的包，不管版本有不有变化，这里都是会取锁定后的 resolutions
-  //  3. 取到后重新存也是一模一样的版本
+  //  2. 如果是已经存在的包，不管版本有不有变化，这里都是会取锁定后的 resolutions，取到后重新存也是一模一样的版本
+  //  3. 如果是已经存在，但是升级的包，这里也会取锁定后的 resolutions，不需要删掉 lock 文件
   //  4. 要想改动后的 resolutions 有变化，用户要删掉 lock 文件
+  //    4.1 merge lock 和本地的 resolutions 就可以解决
 
   // b. resolutions 不保存到 lock 文件，但是当有 lock 文件时，忽略当前 package.json 中的 resolutions
   //  1. 如果有新增的包，没有 resolutions，则会取原本的版本（bug）
-  //    1.1 解决办法需要删掉 lock 文件，yarn 也是这样处理的
+  //    1.1 解决办法需要删掉 lock 文件
   //  2. 如果是已经存在的包，则会取锁定的版本（已经被 resolutions 处理过的，不需要再过一边）
-  //  3、要想改动后的 resolutions 有变化，用户要删掉 lock 文件
+  //  3. 如果是已经存在，但是升级的包，则不会使用锁定版本，而且也不会过 resolutions（bug）
+  //    3.1 解决办法也是需要删掉 lock 文件 
+  //  4、要想改动后的 resolutions 有变化，用户要删掉 lock 文件
   tryGetResolution(parentName: string, depName: string) {
-    // 暂时取 b 方案，性能好一点
+    // 暂时取 b 方案，有空再实现 a 方案
     if (this.lockfile.json) return null;
     const parent = this.resolutions[parentName] || this.resolutions["**"];
     return parent ? parent[depName] : null;
