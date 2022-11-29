@@ -1,4 +1,4 @@
-<div align='center'>
+<div align="center">
 <h2>npm-housekeeper</h2>
 
 [![NPM version](https://img.shields.io/npm/v/npm-housekeeper.svg?color=a1b858&label=)](https://www.npmjs.com/package/npm-housekeeper)
@@ -12,28 +12,28 @@ Build an ideal tree through `package.json` (cross-platform, can be used in `brow
 ### Usage
 
 ```js
-import { install } from 'npm-housekeeper';
+import { install } from "npm-housekeeper";
 
 install({
   legacyPeerDeps: false, // Default value `false`
-  registry: 'https://registry.npmjs.org', // Default value `https://registry.npmjs.org` 
-  lockData: localStorage.getItem('lockData'), // Set lockfile data
+  registry: "https://registry.npmjs.org", // Default value `https://registry.npmjs.org` 
+  lockData: localStorage.getItem("lockData"), // Set lockfile data
   workspace: {
-    '.': {
+    ".": {
       dependencies: {
-        'create-react-app': "*",
-        '@arco-design/web-react': '*',
+        "create-react-app": "*",
+        "@arco-design/web-react": "*",
       },
     },
     p1: {
       dependencies: {
-        'p2': 'workspce:*', // Specify other package in workspace
-        'vue': '*',
+        "p2": "workspce:*", // Specify other package in workspace
+        "vue": "*",
       },
     },
     p2: {
       dependencies: {
-        'react': '*',
+        "react": "*",
       },
     },
   },
@@ -51,6 +51,37 @@ install({
 ```
 
 
+### resolutions
+
+`resolutions` is similar to [yarn"s `resolutions`](https://github.com/yarnpkg/rfcs/blob/master/implemented/0000-selective-versions-resolutions.md), but only supports the following syntaxes.
+
+- `a/b` denotes the directly nested dependency `b` of the project"s dependency `a`.
+- `**/a` denotes all the nested dependencies `a` of the project.
+- `a` is an alias for `**/a`
+
+```js
+import { rslEqual } from "npm-housekeeper";
+
+// Get lockData
+const lockData = localStorage.getItem("lockData");
+
+// If the xx configuration has changed, you should remove the `lockfile`
+const resolutions = {
+  "react": "^17",
+  "@arco-design/web-react/react": "^16",
+}
+
+install({
+  ...,
+  resolutions,
+  // You can use the `rslEqual` method to compare
+  lockData: rslEqual(resolutions, lockData) ? lockData : null,
+}).then((manager) => {
+  // ...
+})
+```
+
+
 ### Other apis
 
 ```js
@@ -58,13 +89,13 @@ install({
 install().then(async manager => {
   // - `version` default is `latest`
   // - `depType` default is `prod`
-  const pkgNode = manager.get('pkgName');
-  const expressNode = await pkgNode.add('express', 'latest', 'prod');
+  const pkgNode = manager.get("pkgName");
+  const expressNode = await pkgNode.add("express", "latest", "prod");
   console.log(expressNode);
 
   // Update lockfile data
   const lockData = apis.lockfile.output();
-  localStorage.setItem('lockData', JSON.stringify(lockData));
+  localStorage.setItem("lockData", JSON.stringify(lockData));
 })
 
 // If an error occurs, log errors
@@ -78,16 +109,16 @@ install().then(manager => {
 install().then(manager => {
   console.log(manager.packages);
   manager.each((name, version, node) => {
-    ...
+    // ...
   })
 })
 
 // Filter some packages
 install({
-  filter: (name, wanted, edgeType) => edgeType === 'dev', // Filter `devDependencies`
+  filter: (name, wanted, edgeType) => edgeType === "dev", // Filter `devDependencies`
   filter: (name, wanted, edgeType) => name.startsWith("@types/"), // Filter `@types/x`
 }).then(manager => {
-  ...
+  // ...
 })
 
 // Get the packages that need to be added or deleted
@@ -108,13 +139,13 @@ install().then(manager => {
 install({
   customFetch: require("node-fetch"),
 }).then(manager => {
-  ...
+  // ...
 })
 
 // `The second way`: set the global `fetch`
 globalThis.fetch = require("node-fetch");
 install().then(manager => {
-  ...
+  // ...
 })
 ```
 

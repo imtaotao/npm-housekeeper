@@ -1,5 +1,11 @@
 console.time("install");
 
+const lockData = localStorage.getItem("lockData");
+const resolutions = {
+  // react: "^17",
+  // "@arco-design/web-react/react": "^16",
+};
+
 install({
   workspace: {
     ".": {
@@ -12,6 +18,7 @@ install({
     p1: {
       dependencies: {
         vue: "*",
+        react: "^15",
         p2: "workspace:*",
       },
     },
@@ -23,10 +30,8 @@ install({
       },
     },
   },
-  resolutions: {
-    react: "^17",
-  },
-  lockData: localStorage.getItem("lockData"),
+  resolutions,
+  lockData: rslEqual(resolutions, lockData) ? lockData : null,
   filter: (name) => name.startsWith("@types/"),
 }).then(async (manager) => {
   console.timeEnd("install");

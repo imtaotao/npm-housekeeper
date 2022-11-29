@@ -1,4 +1,5 @@
 import type { EdgeType } from "./node";
+import type { LockfileJson } from "./lockfile";
 
 export const wf = "workspace:";
 export const isWs = (spec: string) => spec.startsWith(wf);
@@ -18,6 +19,19 @@ export const getDepPropByEdgeType = (edgeType: EdgeType, isGet: boolean) => {
     return isGet ? "peerDependencies" : "peerDependenciesMeta";
   }
   throw new TypeError(`Invalid edge type "${edgeType}"`);
+};
+
+const jsonCache = new Map<string, LockfileJson>();
+export const formatLockfileData = (
+  lockfileData?: string | LockfileJson | null
+) => {
+  if (typeof lockfileData === "string") {
+    if (!jsonCache.has(lockfileData)) {
+      jsonCache.set(lockfileData, JSON.parse(lockfileData));
+    }
+    return jsonCache.get(lockfileData);
+  }
+  return lockfileData as LockfileJson | null;
 };
 
 // `a/b`
@@ -48,12 +62,24 @@ const parseResolutionKey = (key: string) => {
   return cache[key];
 };
 
+interface ResolutionValue {
+  raw: string;
+  wanted: string;
+  version: string;
+}
+
 export const formatResolutions = (resolutions: Record<string, string>) => {
-  const obj: Record<string, Record<string, string>> = Object.create(null);
+  const obj: Record<string, Record<string, ResolutionValue>> = Object.create(
+    null
+  );
   for (const key in resolutions) {
     const { parentName, depName } = parseResolutionKey(key);
     if (!obj[parentName]) obj[parentName] = Object.create(null);
-    obj[parentName][depName] = resolutions[key];
+    obj[parentName][depName] = {
+      raw: key,
+      version: "",
+      wanted: resolutions[key],
+    };
   }
   return obj;
 };

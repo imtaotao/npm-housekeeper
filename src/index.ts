@@ -3,13 +3,15 @@ import { cropEmptyNodes } from "./cropPkgs";
 import { Manager, FilterType } from "./manager";
 import { Lockfile, LockfileJson } from "./lockfile";
 
+export { rslEqual } from "./rslEqual";
+
 export interface InstallOptions {
   registry?: string;
   filter?: FilterType;
   legacyPeerDeps?: boolean;
   customFetch?: typeof fetch;
-  lockData?: LockfileJson | string;
   resolutions?: Record<string, string>;
+  lockData?: LockfileJson | string | null;
   workspace?: Record<string, WorkspaceJson>;
 }
 

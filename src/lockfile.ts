@@ -1,7 +1,7 @@
 import * as semver from "esm-semver";
-import { getDepPropByEdgeType } from "./utils";
 import type { Manager } from "./manager";
 import type { Node, EdgeType, NodeDeps } from "./node";
+import { formatLockfileData, getDepPropByEdgeType } from "./utils";
 
 export interface ImporterValue extends NodeDeps {
   specifiers?: Record<string, string>;
@@ -17,13 +17,14 @@ export type Packages = Record<string, Record<string, PackageValue>>;
 
 export interface LockfileJson {
   lockfileVersion: string;
-  importers: Record<string, ImporterValue>;
   packages: Packages;
+  importers: Record<string, ImporterValue>;
+  resolutions?: Record<string, string>;
 }
 
 interface LockfileOptions {
   managerGetter: () => Manager;
-  json?: LockfileJson | string;
+  json?: LockfileJson | string | null;
 }
 
 export class Lockfile {
@@ -36,7 +37,7 @@ export class Lockfile {
     this.set(opts.json);
   }
 
-  private canUse(json?: LockfileJson) {
+  private canUse(json?: LockfileJson | null) {
     if (!json || typeof json !== "object") return false;
     if (json.lockfileVersion !== this.version) return false;
     for (const p of ["importers", "packages"] as const) {
@@ -152,9 +153,23 @@ export class Lockfile {
     return error;
   }
 
+  private processResolution(manager: Manager, json: LockfileJson) {
+    for (const pk in manager.resolutions) {
+      for (const ck in manager.resolutions[pk]) {
+        const { raw, wanted, version } = manager.resolutions[pk][ck];
+        if (!json.resolutions) json.resolutions = Object.create(null);
+        json.resolutions![`${raw}@${wanted}`] = version;
+      }
+    }
+  }
+
+  tryGetResolution(key: string, wanted: string) {
+    if (!this.json || !this.json.resolutions) return null;
+    return this.json.resolutions[`${key}@${wanted}`];
+  }
+
   tryGetNodeManifest(name: string, version: string) {
-    if (!this.json) return null;
-    if (!this.json.packages[name]) return null;
+    if (!this.json || !this.json.packages[name]) return null;
     const data = this.json.packages[name][version];
     if (!data) return null;
     return { name, version, ...data };
@@ -189,12 +204,10 @@ export class Lockfile {
     return null;
   }
 
-  set(json?: LockfileJson | string) {
-    if (typeof json === "string") {
-      json = JSON.parse(json) as LockfileJson;
-    }
+  set(json?: LockfileJson | string | null) {
+    json = formatLockfileData(json);
     if (this.canUse(json)) {
-      this.json = json;
+      this.json = json as LockfileJson;
       return true;
     }
     return false;
@@ -203,9 +216,12 @@ export class Lockfile {
   output() {
     const manager = this.managerGetter();
     const json: LockfileJson = Object.create(null);
+
     json.lockfileVersion = this.version;
+    this.processResolution(manager, json);
     json.importers = Object.create(null);
     json.packages = Object.create(null);
+
     // If there is an error, the lockfile cannot be generated
     if (this.processPackageNodes(manager, json)) return null;
     for (const [_n, node] of Object.entries(manager.workspace)) {

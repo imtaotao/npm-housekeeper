@@ -107,12 +107,13 @@ export class Node {
     if (!force && !this.isWorkspace()) {
       throw new Error("Only add dependencies to the workspace node");
     }
-    version = this.manager.tryGetResolution(this.name, name) || version;
+    const resolution = this.manager.tryGetResolution(this.name, name);
     const accept = (this.pkg.acceptDependencies || {})[name];
     const nodeOrErr = await this.loadSingleDepType(
       name,
-      version,
       edgeType,
+      version,
+      resolution,
       accept
     );
 
@@ -126,6 +127,8 @@ export class Node {
     }
   }
 
+  // TODO: The traversal needs to be sorted,
+  // otherwise it may not match the same version as in the lock file for `*`
   loadDeps() {
     const ls = [];
     const {
@@ -174,15 +177,17 @@ export class Node {
     for (let [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
       // Handling resolutions
-      wanted = this.manager.tryGetResolution(this.name, name) || wanted;
+      const resolution = this.manager.tryGetResolution(this.name, name);
       const accept = ad[name];
       if (typeof this.manager.opts.filter === "function") {
-        if (this.manager.opts.filter(name, wanted, edgeType)) {
+        if (this.manager.opts.filter(name, resolution || wanted, edgeType)) {
           this.edges[name] = this.createEdge(name, wanted, edgeType, accept);
           continue;
         }
       }
-      ls.push(this.loadSingleDepType(name, wanted, edgeType, accept));
+      ls.push(
+        this.loadSingleDepType(name, edgeType, wanted, resolution, accept)
+      );
     }
     return Promise.all(ls);
   }
@@ -190,11 +195,13 @@ export class Node {
   // This will force an update of the edge nodes
   private async loadSingleDepType(
     name: string,
-    wanted: string,
     edgeType: EdgeType,
+    wanted: string,
+    resolution: string | null,
     accept?: string
   ) {
-    const isws = isWs(wanted);
+    const finalWanted = resolution || wanted;
+    const isws = isWs(finalWanted);
     if (isws && !this.isWorkspace()) {
       const e = new Error(`Only workspace nodes can use "${wf}"`);
       this.errors.push(e);
@@ -202,7 +209,12 @@ export class Node {
     }
     // Placeholder (may be an empty object if optional)
     this.edges[name] = Object.create(null) as any;
-    const node = this.manager.tryGetReusableNode(name, wanted, this, accept);
+    const node = this.manager.tryGetReusableNode(
+      name,
+      finalWanted,
+      this,
+      accept
+    );
 
     if (node) {
       this.edges[name] = this.createEdge(name, wanted, edgeType, accept, node);
@@ -216,8 +228,12 @@ export class Node {
       return e;
     } else {
       try {
-        const version = this.tryGetVersionInWorkspace(name, wanted, edgeType);
-        const searchWanted = version === null ? wanted : version;
+        const version = this.tryGetVersionInWorkspace(
+          name,
+          finalWanted,
+          edgeType
+        );
+        const searchWanted = version === null ? finalWanted : version;
         const node = await this.manager.createNode(name, searchWanted);
 
         this.edges[name] = this.createEdge(
@@ -229,6 +245,7 @@ export class Node {
         );
         node.usedEdges.add(this.edges[name]);
         this.manager.setReusableNode(node);
+        this.manager.setResolution(this.name, name, node.version);
         // The child node also has to load his own dependencies
         await node.loadDeps();
         return node;

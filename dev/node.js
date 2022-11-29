@@ -1,8 +1,9 @@
 const fs = require("fs");
-const { install } = require("../dist/housekeeper.cjs");
+const { install, rslEqual } = require("../dist/housekeeper.cjs");
 
 globalThis.isNodeEnv = true;
 globalThis.install = install;
+globalThis.rslEqual = rslEqual;
 globalThis.fetch = require("node-fetch");
 globalThis.localStorage = {
   setItem(name, data) {
