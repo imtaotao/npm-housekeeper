@@ -1,8 +1,8 @@
 import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
 import type { Lockfile } from "./lockfile";
-import { isWs, getWsWanted } from "./utils";
 import { EdgeType, Node, WorkspaceJson } from "./node";
+import { isWs, getWsWanted, formatResolutions } from "./utils";
 
 type EachCallback = (
   pkgName: string,
@@ -28,10 +28,12 @@ export interface ManagerOptions {
 export class Manager {
   public workspace: Record<string, Node> = Object.create(null);
   public packages: Record<string, Record<string, Node>> = Object.create(null);
-  // { react: { '1.0.0': Node } }
-  private manifests = new Map<string, PackageData | Promise<PackageData>>();
+  private resolutions: ReturnType<typeof formatResolutions>; // { 'react-dom': { react: '1.0.0' } }
+  private manifests = new Map<string, PackageData | Promise<PackageData>>(); // { react: { '1.0.0': Node } }
 
-  constructor(public opts: ManagerOptions) {}
+  constructor(public opts: ManagerOptions) {
+    this.resolutions = formatResolutions(opts.resolutions);
+  }
 
   get lockfile() {
     return this.opts.lockfile;
@@ -115,6 +117,26 @@ export class Manager {
   satisfiedBy(node: Node, wanted: string, from: Node | null, accept?: string) {
     if (accept !== undefined) accept = accept || "*";
     return depValid(node, wanted, accept, from);
+  }
+
+  // a. resolutions 固定后保存到 lock 文件
+  //  1. 如果有新增的包，lock 的 resolutions 里面没有，这里取空，还是会取原来的版本（bug）
+  //    1.1 解决办法需要 merge 或者删掉 lock 文件
+  //    2.2 merge 的好处是不需要删掉 lock 文件，这对于在浏览器里面使用很有用
+  //  2. 如果是已经存在的包，不管版本有不有变化，这里都是会取锁定后的 resolutions
+  //  3. 取到后重新存也是一模一样的版本
+  //  4. 要想改动后的 resolutions 有变化，用户要删掉 lock 文件
+
+  // b. resolutions 不保存到 lock 文件，但是当有 lock 文件时，忽略当前 package.json 中的 resolutions
+  //  1. 如果有新增的包，没有 resolutions，则会取原本的版本（bug）
+  //    1.1 解决办法需要删掉 lock 文件，yarn 也是这样处理的
+  //  2. 如果是已经存在的包，则会取锁定的版本（已经被 resolutions 处理过的，不需要再过一边）
+  //  3、要想改动后的 resolutions 有变化，用户要删掉 lock 文件
+  tryGetResolution(parentName: string, depName: string) {
+    // 暂时取 b 方案，性能好一点
+    if (this.lockfile.json) return null;
+    const parent = this.resolutions[parentName] || this.resolutions["**"];
+    return parent ? parent[depName] : null;
   }
 
   tryGetReusableNode(

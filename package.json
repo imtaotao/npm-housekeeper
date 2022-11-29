@@ -7,7 +7,7 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "rollup --config",
-    "dev": "http-server -p 8085 ./ -o dev/b.html",
+    "dev": "http-server -p 8085 ./ -o dev/browser.html",
     "format": "prettier --write --parser typescript \"(src|lib|dev|dist|tests)/**/*.(js|ts?(x))\""
   },
   "author": "imtaotao",

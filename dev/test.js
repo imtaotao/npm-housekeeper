@@ -23,6 +23,9 @@ install({
       },
     },
   },
+  resolutions: {
+    react: "^17",
+  },
   lockData: localStorage.getItem("lockData"),
   filter: (name) => name.startsWith("@types/"),
 }).then(async (manager) => {
@@ -44,9 +47,9 @@ install({
   };
   setLockfile();
 
-  const expressNode = await manager.get(".").add("express");
-  console.log(expressNode);
-  setLockfile();
+  // const expressNode = await manager.get(".").add("express");
+  // console.log(expressNode);
+  // setLockfile();
 
   if (isNodeEnv) debugger;
 });

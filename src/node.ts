@@ -107,6 +107,7 @@ export class Node {
     if (!force && !this.isWorkspace()) {
       throw new Error("Only add dependencies to the workspace node");
     }
+    version = this.manager.tryGetResolution(this.name, name) || version;
     const accept = (this.pkg.acceptDependencies || {})[name];
     const nodeOrErr = await this.loadSingleDepType(
       name,
@@ -170,8 +171,10 @@ export class Node {
     const ls = [];
     const ad = this.pkg.acceptDependencies || {};
 
-    for (const [name, wanted] of Object.entries(deps)) {
+    for (let [name, wanted] of Object.entries(deps)) {
       if (!name || this.edges[name]) continue;
+      // Handling resolutions
+      wanted = this.manager.tryGetResolution(this.name, name) || wanted;
       const accept = ad[name];
       if (typeof this.manager.opts.filter === "function") {
         if (this.manager.opts.filter(name, wanted, edgeType)) {
