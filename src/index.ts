@@ -9,6 +9,7 @@ export interface InstallOptions {
   legacyPeerDeps?: boolean;
   customFetch?: typeof fetch;
   lockData?: LockfileJson | string;
+  resolutions?: Record<string, string>;
   workspace?: Record<string, WorkspaceJson>;
 }
 
@@ -23,6 +24,7 @@ export async function install(opts: InstallOptions = {}) {
     filter: opts.filter,
     registry: opts.registry,
     customFetch: opts.customFetch,
+    resolutions: opts.resolutions || {},
     legacyPeerDeps: Boolean(opts.legacyPeerDeps),
   });
 

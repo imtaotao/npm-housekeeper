@@ -19,6 +19,7 @@ export type FilterType = (
 export interface ManagerOptions {
   lockfile: Lockfile;
   legacyPeerDeps: boolean;
+  resolutions: Record<string, string>;
   registry?: string;
   filter?: FilterType;
   customFetch?: typeof fetch;
