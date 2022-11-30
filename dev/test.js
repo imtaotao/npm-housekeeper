@@ -1,11 +1,5 @@
 console.time("install");
 
-const lockData = localStorage.getItem("lockData");
-const resolutions = {
-  // react: "^17",
-  "@arco-design/web-react/react": "^16", // 会影响顺序
-};
-
 install({
   workspace: {
     ".": {
@@ -30,20 +24,24 @@ install({
       },
     },
   },
-  resolutions,
-  lockData: rslEqual(resolutions, lockData) ? lockData : null,
+  lockData: localStorage.getItem("lockData"),
+  resolutions: {
+    // react: "^17",
+    "@arco-design/web-react/react": "^16", // 会影响顺序
+  },
   filter: (name) => name.startsWith("@types/"),
 }).then(async (manager) => {
   console.timeEnd("install");
   globalThis.manager = manager;
 
-  for (const v in manager.packages.react) {
-    for (const edge of manager.packages.react[v].usedEdges) {
-      console.log(
-        `react@${v}(wanted: ${edge.wanted}  ), parentProject is "${edge.parentNode.name}@${edge.parentNode.version}"`
-      );
-    }
-  }
+  // console.log('---------------');
+  // for (const v in manager.packages.react) {
+  //   for (const edge of manager.packages.react[v].usedEdges) {
+  //     console.log(
+  //       `react@${v}(wanted: ${edge.wanted}  ), parentProject is "${edge.parentNode.name}@${edge.parentNode.version}"`
+  //     );
+  //   }
+  // }
 
   const setLockfile = () => {
     if (manager.hasError()) {

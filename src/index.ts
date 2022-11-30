@@ -3,8 +3,6 @@ import { cropEmptyNodes } from "./cropPkgs";
 import { Manager, FilterType } from "./manager";
 import { Lockfile, LockfileJson } from "./lockfile";
 
-export { rslEqual } from "./rslEqual";
-
 export interface InstallOptions {
   registry?: string;
   filter?: FilterType;

@@ -19,7 +19,6 @@ export interface LockfileJson {
   lockfileVersion: string;
   packages: Packages;
   importers: Record<string, ImporterValue>;
-  resolutions?: Record<string, string>;
 }
 
 interface LockfileOptions {
@@ -153,22 +152,6 @@ export class Lockfile {
     return error;
   }
 
-  private processResolution(manager: Manager, json: LockfileJson) {
-    for (const parentKey in manager.resolutions) {
-      for (const depKey in manager.resolutions[parentKey]) {
-        const { raw, wanted, version } = manager.resolutions[parentKey][depKey];
-        if (!json.resolutions) json.resolutions = Object.create(null);
-        // If the dependency does not exist, there is no real version, we record `wanted`
-        json.resolutions![`${raw}@${wanted}`] = version || wanted;
-      }
-    }
-  }
-
-  tryGetResolution(key: string, wanted: string) {
-    if (!this.json || !this.json.resolutions) return null;
-    return this.json.resolutions[`${key}@${wanted}`];
-  }
-
   tryGetNodeManifest(name: string, version: string) {
     if (!this.json || !this.json.packages[name]) return null;
     const data = this.json.packages[name][version];
@@ -219,10 +202,8 @@ export class Lockfile {
     const json: LockfileJson = Object.create(null);
 
     json.lockfileVersion = this.version;
-    this.processResolution(manager, json);
     json.importers = Object.create(null);
     json.packages = Object.create(null);
-
     // If there is an error, the lockfile cannot be generated
     if (this.processPackageNodes(manager, json)) return null;
     for (const [_n, node] of Object.entries(manager.workspace)) {

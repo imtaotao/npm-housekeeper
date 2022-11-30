@@ -50,6 +50,9 @@ export class Manager {
         if (node !== target) {
           for (const edge of node.usedEdges) {
             if (this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
+              // TODO: If multiple versions are available,
+              // we will use the most used one,
+              // and if there are as many, we will use the higher version first.
               edge.node = target;
               target.usedEdges.add(edge);
               node.usedEdges.delete(edge);
@@ -129,12 +132,7 @@ export class Manager {
   tryGetResolution(parentName: string, depName: string) {
     const parent = this.resolutions[parentName] || this.resolutions["**"];
     if (!parent || !parent[depName]) return null;
-    return (
-      this.lockfile.tryGetResolution(
-        parent[depName].raw,
-        parent[depName].wanted
-      ) || parent[depName].wanted
-    );
+    return parent[depName].wanted;
   }
 
   setResolution(parentName: string, depName: string, version: string) {

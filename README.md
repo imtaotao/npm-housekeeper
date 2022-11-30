@@ -60,22 +60,14 @@ install({
 - `a` is an alias for `**/a`
 
 ```js
-import { rslEqual } from "npm-housekeeper";
-
-// Get lockData
-const lockData = localStorage.getItem("lockData");
-
-// If the xx configuration has changed, you should remove the `lockfile`
-const resolutions = {
-  "react": "^17",
-  "@arco-design/web-react/react": "^16",
-}
-
 install({
   ...,
-  resolutions,
-  // You can use the `rslEqual` method to compare
-  lockData: rslEqual(resolutions, lockData) ? lockData : null,
+  // If the xx configuration has changed, you should remove the `lockfile`
+  lockData: localStorage.getItem("lockData"),
+  resolutions: {
+    "react": "^17",
+    "@arco-design/web-react/react": "^16",
+  },
 }).then((manager) => {
   // ...
 })
