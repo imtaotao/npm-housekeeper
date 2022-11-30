@@ -81,8 +81,15 @@ export class Manager {
 
   each(callback: EachCallback) {
     let cbRes: any = true;
-    for (const name in this.packages) {
-      for (const version in this.packages[name]) {
+    let i = -1;
+    const pKeys = Object.keys(this.packages).sort();
+    while (++i < pKeys.length) {
+      const name = pKeys[i];
+      // Need to be sorted, high version is preferred
+      const vKeys = Object.keys(this.packages[name]).sort();
+      let j = vKeys.length;
+      while (~--j) {
+        const version = vKeys[j];
         cbRes = callback(name, version, this.packages[name][version]);
         if (cbRes === false) break;
       }

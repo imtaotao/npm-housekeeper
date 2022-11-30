@@ -16,7 +16,7 @@ export function rslEqual(
   }
   for (const key of rslKeys) {
     const wanted = resolutions[key];
-    if (!lockResolutions[`${key}@${wanted}`]) {
+    if (!(`${key}@${wanted}` in lockResolutions)) {
       return false;
     }
   }

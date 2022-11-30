@@ -3,21 +3,21 @@ console.time("install");
 const lockData = localStorage.getItem("lockData");
 const resolutions = {
   // react: "^17",
-  // "@arco-design/web-react/react": "^16",
+  "@arco-design/web-react/react": "^16", // 会影响顺序
 };
 
 install({
   workspace: {
     ".": {
       dependencies: {
-        vue: "^2.7.12",
-        "create-react-app": "latest",
+        // vue: "^2.7.12",
+        // "create-react-app": "latest",
         "@arco-design/web-react": "*",
       },
     },
     p1: {
       dependencies: {
-        vue: "*",
+        // vue: "*",
         react: "^15",
         p2: "workspace:*",
       },
@@ -26,7 +26,7 @@ install({
       name: "p2",
       dependencies: {
         react: "*",
-        vue: "^2.7.13",
+        // vue: "^2.7.13",
       },
     },
   },
@@ -37,14 +37,23 @@ install({
   console.timeEnd("install");
   globalThis.manager = manager;
 
+  for (const v in manager.packages.react) {
+    for (const edge of manager.packages.react[v].usedEdges) {
+      console.log(
+        `react@${v}(wanted: ${edge.wanted}  ), parentProject is "${edge.parentNode.name}@${edge.parentNode.version}"`
+      );
+    }
+  }
+
   const setLockfile = () => {
     if (manager.hasError()) {
       manager.logError();
     } else {
       const lockData = manager.lockfile.output();
       const diffData = manager.lockfile.diff(lockData);
-      console.log(lockData);
-      console.log(diffData);
+      // console.log(lockData);
+      // console.log(diffData);
+      globalThis.lockData = lockData;
 
       manager.lockfile.set(lockData);
       localStorage.setItem("lockData", JSON.stringify(lockData, null, 2));

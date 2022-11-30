@@ -154,11 +154,12 @@ export class Lockfile {
   }
 
   private processResolution(manager: Manager, json: LockfileJson) {
-    for (const pk in manager.resolutions) {
-      for (const ck in manager.resolutions[pk]) {
-        const { raw, wanted, version } = manager.resolutions[pk][ck];
+    for (const parentKey in manager.resolutions) {
+      for (const depKey in manager.resolutions[parentKey]) {
+        const { raw, wanted, version } = manager.resolutions[parentKey][depKey];
         if (!json.resolutions) json.resolutions = Object.create(null);
-        json.resolutions![`${raw}@${wanted}`] = version;
+        // If the dependency does not exist, there is no real version, we record `wanted`
+        json.resolutions![`${raw}@${wanted}`] = version || wanted;
       }
     }
   }
