@@ -234,7 +234,6 @@ export class Node {
         node
       );
       node.usedEdges.add(this.edges[name]);
-      this.manager.tryReplace(node);
       return node;
     } else if (useWs) {
       const e = new Error(
@@ -262,7 +261,6 @@ export class Node {
         );
         node.usedEdges.add(this.edges[name]);
         this.manager.setReusableNode(node);
-        this.manager.tryReplace(node);
         // The child node also has to load his own dependencies
         await node.loadDeps();
         return node;

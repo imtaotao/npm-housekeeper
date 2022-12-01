@@ -13,7 +13,7 @@ install({
       dependencies: {
         vue: "*",
         react: "^15",
-        p2: "workspace:*",
+        // p2: "workspace:*",
       },
     },
     p2: {
@@ -40,10 +40,11 @@ install({
   globalThis.manager = manager;
 
   console.log("---------------");
-  for (const v in manager.packages.react) {
-    for (const edge of manager.packages.react[v].usedEdges) {
+  const pkgName = 'vue';
+  for (const v in manager.packages[pkgName]) {
+    for (const edge of manager.packages[pkgName][v].usedEdges) {
       console.log(
-        `react@${v}(wanted: ${edge.wanted}, resolution: ${edge.resolution} ), parentProject is "${edge.parentNode.name}@${edge.parentNode.version}"`
+        `${pkgName}@${v}(wanted: ${edge.wanted}, resolution: ${edge.resolution} ), parentProject is "${edge.parentNode.name}@${edge.parentNode.version}"`
       );
     }
   }

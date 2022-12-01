@@ -37,7 +37,6 @@ export interface ManagerOptions {
 export class Manager {
   public workspace: Record<string, Node> = Object.create(null);
   public packages: Record<string, Record<string, Node>> = Object.create(null);
-  private replaceSet = new Set<() => void>();
   private resolutions: ReturnType<typeof formatResolutions>; // { 'react-dom': { react: '1.0.0' } }
   private manifests = new Map<string, PackageData | Promise<PackageData>>(); // { react: { '1.0.0': Node } }
 
@@ -60,37 +59,17 @@ export class Manager {
     for (const version in nodes) {
       const node = nodes[version];
       if (node === target) continue;
-
-      this.replaceSet.add(() => {
-        for (const edge of node.usedEdges) {
-          if (this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
-            const move = () => {
-              edge.node = target;
-              target.usedEdges.add(edge);
-              node.usedEdges.delete(edge);
-            };
-            if (target.version === node.version) {
-              // The old ones may be deleted, because of asynchronous requests,
-              // nodes may be created repeatedly, and all are migrated to the same one here.
-              move();
-            } else if (target.usedEdges.size > node.usedEdges.size) {
-              // We choose the version that uses more
-              move();
-            } else if (target.usedEdges.size === node.usedEdges.size) {
-              // We choose the node with the higher version
-              if (semver.gt(target.version, node.version)) {
-                move();
-              }
-            }
-          }
+      for (const edge of node.usedEdges) {
+        if (target.version === node.version || this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
+          edge.node = target;
+          target.usedEdges.add(edge);
+          node.usedEdges.delete(edge);
         }
-      });
+      }
     }
   }
 
   prune() {
-    this.replaceSet.forEach((fn) => fn());
-    this.replaceSet.clear();
     cropEmptyNodes(this);
   }
 
@@ -219,6 +198,7 @@ export class Manager {
       if (!this.packages[node.name]) {
         this.packages[node.name] = Object.create(null);
       }
+      this.tryReplace(node);
       this.packages[node.name][node.version] = node;
     }
   }
