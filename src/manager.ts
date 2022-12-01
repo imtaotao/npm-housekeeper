@@ -46,37 +46,36 @@ export class Manager {
   // and the same one should be reused as much as possible
   private tryReplace(target: Node) {
     const nodes = this.packages[target.name];
-    if (nodes) {
-      for (const version in nodes) {
-        const node = nodes[version];
-        if (node !== target) {
-          this.replaceSet.add(() => {
-            for (const edge of node.usedEdges) {
-              if (this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
-                const move = () => {
-                  edge.node = target;
-                  target.usedEdges.add(edge);
-                  node.usedEdges.delete(edge);
-                };
+    if (!nodes) return;
 
-                if (target.version === node.version) {
-                  // The old ones may be deleted, because of asynchronous requests,
-                  // nodes may be created repeatedly, and all are migrated to the same one here.
-                  move();
-                } else if (target.usedEdges.size > node.usedEdges.size) {
-                  // We choose the version that uses more
-                  move();
-                } else if (target.usedEdges.size === node.usedEdges.size) {
-                  // We choose the node with the higher version
-                  if (semver.gt(target.version, node.version)) {
-                    move();
-                  }
-                }
+    for (const version in nodes) {
+      const node = nodes[version];
+      if (node === target) continue;
+
+      this.replaceSet.add(() => {
+        for (const edge of node.usedEdges) {
+          if (this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
+            const move = () => {
+              edge.node = target;
+              target.usedEdges.add(edge);
+              node.usedEdges.delete(edge);
+            };
+            if (target.version === node.version) {
+              // The old ones may be deleted, because of asynchronous requests,
+              // nodes may be created repeatedly, and all are migrated to the same one here.
+              move();
+            } else if (target.usedEdges.size > node.usedEdges.size) {
+              // We choose the version that uses more
+              move();
+            } else if (target.usedEdges.size === node.usedEdges.size) {
+              // We choose the node with the higher version
+              if (semver.gt(target.version, node.version)) {
+                move();
               }
             }
-          });
+          }
         }
-      }
+      });
     }
   }
 
