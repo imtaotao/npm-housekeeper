@@ -30,6 +30,11 @@ install({
     "@arco-design/web-react/react": "^16", // 会影响顺序
   },
   filter: (name) => name.startsWith("@types/"),
+  retry: (name, times, next) => {
+    if (times > 5) return false;
+    console.log(`${name} retry times ("${times}")`);
+    next();
+  },
 }).then(async (manager) => {
   console.timeEnd("install");
   globalThis.manager = manager;

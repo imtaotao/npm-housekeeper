@@ -1,9 +1,10 @@
 import type { NodePkgJson, WorkspaceJson } from "./node";
-import { Manager, FilterType } from "./manager";
 import { Lockfile, LockfileJson } from "./lockfile";
+import { Manager, FilterType, RetryType } from "./manager";
 
 export interface InstallOptions {
   registry?: string;
+  retry?: RetryType;
   filter?: FilterType;
   legacyPeerDeps?: boolean;
   customFetch?: typeof fetch;
@@ -20,6 +21,7 @@ export async function install(opts: InstallOptions = {}) {
 
   const manager: Manager = new Manager({
     lockfile,
+    retry: opts.retry,
     filter: opts.filter,
     registry: opts.registry,
     customFetch: opts.customFetch,

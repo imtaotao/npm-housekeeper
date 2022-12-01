@@ -4,13 +4,19 @@ import { depValid } from "./depValid";
 import { cropEmptyNodes } from "./cropPkgs";
 import type { Lockfile } from "./lockfile";
 import { EdgeType, Node, WorkspaceJson } from "./node";
-import { isWs, getWsWanted, formatResolutions } from "./utils";
+import { isWs, getWsWanted, createDefer, formatResolutions } from "./utils";
 
 type EachCallback = (
   pkgName: string,
   version: string,
   node: Node
 ) => void | boolean;
+
+export type RetryType = (
+  name: string,
+  times: number,
+  retry: () => void
+) => boolean | void;
 
 export type FilterType = (
   name: string,
@@ -22,6 +28,7 @@ export interface ManagerOptions {
   lockfile: Lockfile;
   legacyPeerDeps: boolean;
   resolutions: Record<string, string>;
+  retry?: RetryType;
   registry?: string;
   filter?: FilterType;
   customFetch?: typeof fetch;
@@ -92,13 +99,31 @@ export class Manager {
     if (this.manifests.has(spec)) {
       return this.manifests.get(spec)!;
     } else {
-      const { registry, customFetch } = this.opts;
-      const p = gpi(name, wanted, { registry, customFetch }).then((mani) => {
-        this.manifests.set(spec, mani);
-        return mani;
-      });
-      this.manifests.set(spec, p);
-      return p;
+      let times = 0;
+      let canContinue: boolean | void;
+      const { retry, registry, customFetch } = this.opts;
+
+      const request = () => {
+        const p = gpi(name, wanted, { registry, customFetch })
+          .then((mani) => {
+            this.manifests.set(spec, mani);
+            return mani;
+          })
+          .catch(async (e) => {
+            if (retry && canContinue !== false) {
+              const defer = createDefer();
+              canContinue = retry(name, ++times, () => {
+                request().then(defer.resolve, defer.reject);
+              });
+              await defer.p;
+            }
+            throw e;
+          });
+        this.manifests.set(spec, p);
+        return p;
+      };
+
+      return request();
     }
   }
 
