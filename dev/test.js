@@ -16,15 +16,15 @@ install({
         // p2: "workspace:*",
       },
     },
-    p2: {
-      name: "p2",
-      dependencies: {
-        react: "*",
-        vue: "^2.7.13",
-      },
-    },
+    // p2: {
+    //   name: "p2",
+    //   dependencies: {
+    //     react: "*",
+    //     vue: "^2.7.13",
+    //   },
+    // },
   },
-  lockData: localStorage.getItem("lockData"),
+  // lockData: localStorage.getItem("lockData"),
   resolutions: {
     // react: "^17",
     "@arco-design/web-react/react": "^16", // 会影响顺序
