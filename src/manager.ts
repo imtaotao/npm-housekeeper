@@ -1,6 +1,7 @@
 import * as semver from "esm-semver";
 import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
+import { cropEmptyNodes } from "./cropPkgs";
 import type { Lockfile } from "./lockfile";
 import { EdgeType, Node, WorkspaceJson } from "./node";
 import { isWs, getWsWanted, formatResolutions } from "./utils";
@@ -77,6 +78,12 @@ export class Manager {
         }
       });
     }
+  }
+
+  prune() {
+    this.replaceSet.forEach((fn) => fn());
+    this.replaceSet.clear();
+    cropEmptyNodes(this);
   }
 
   fetchManifest(name: string, wanted: string) {

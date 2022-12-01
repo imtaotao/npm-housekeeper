@@ -1,5 +1,4 @@
 import type { NodePkgJson, WorkspaceJson } from "./node";
-import { cropEmptyNodes } from "./cropPkgs";
 import { Manager, FilterType } from "./manager";
 import { Lockfile, LockfileJson } from "./lockfile";
 
@@ -40,7 +39,6 @@ export async function install(opts: InstallOptions = {}) {
     );
   }
 
-  manager.replaceSet.forEach((fn) => fn());
-  cropEmptyNodes(manager);
+  manager.prune();
   return manager;
 }

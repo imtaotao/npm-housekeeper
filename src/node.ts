@@ -122,6 +122,7 @@ export class Node {
       const prop = getDepPropByEdgeType(edgeType, true);
       if (!this.pkg[prop]) this.pkg[prop] = Object.create(null);
       this.pkg[prop]![name] = version;
+      this.manager.prune();
       return nodeOrErr;
     } else {
       throw nodeOrErr;
