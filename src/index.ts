@@ -40,6 +40,7 @@ export async function install(opts: InstallOptions = {}) {
     );
   }
 
+  manager.replaceSet.forEach((fn) => fn());
   cropEmptyNodes(manager);
   return manager;
 }

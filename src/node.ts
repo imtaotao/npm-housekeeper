@@ -33,6 +33,7 @@ export interface Edge {
   name: string;
   wanted: string;
   parentNode: Node;
+  resolution: string | null;
   node?: Node;
   accept?: string;
 }
@@ -181,7 +182,13 @@ export class Node {
       const accept = ad[name];
       if (typeof this.manager.opts.filter === "function") {
         if (this.manager.opts.filter(name, resolution || wanted, edgeType)) {
-          this.edges[name] = this.createEdge(name, wanted, edgeType, accept);
+          this.edges[name] = this.createEdge(
+            name,
+            wanted,
+            resolution,
+            edgeType,
+            accept
+          );
           continue;
         }
       }
@@ -201,8 +208,8 @@ export class Node {
     accept?: string
   ) {
     const finalWanted = resolution || wanted;
-    const isws = isWs(finalWanted);
-    if (isws && !this.isWorkspace()) {
+    const useWs = isWs(finalWanted);
+    if (useWs && !this.isWorkspace()) {
       const e = new Error(`Only workspace nodes can use "${wf}"`);
       this.errors.push(e);
       return e;
@@ -217,10 +224,17 @@ export class Node {
     );
 
     if (node) {
-      this.edges[name] = this.createEdge(name, wanted, edgeType, accept, node);
+      this.edges[name] = this.createEdge(
+        name,
+        wanted,
+        resolution,
+        edgeType,
+        accept,
+        node
+      );
       node.usedEdges.add(this.edges[name]);
       return node;
-    } else if (isws) {
+    } else if (useWs) {
       const e = new Error(
         `There are no available "${name}" nodes in workspace`
       );
@@ -239,6 +253,7 @@ export class Node {
         this.edges[name] = this.createEdge(
           name,
           wanted,
+          resolution,
           edgeType,
           accept,
           node
@@ -279,6 +294,7 @@ export class Node {
   private createEdge(
     name: string,
     wanted: string,
+    resolution: string | null,
     edgeType: EdgeType,
     accept?: string,
     node?: Node
@@ -290,6 +306,7 @@ export class Node {
     edge.accept = accept;
     edge.wanted = wanted;
     edge.parentNode = this;
+    edge.resolution = resolution;
     edge.ws = isWs(wanted);
     // All are links, we are mimicking the behavior of pnpm
     edge.link = true;

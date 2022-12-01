@@ -1,3 +1,4 @@
+import * as semver from "esm-semver";
 import { gpi, PackageData } from "gpi";
 import { depValid } from "./depValid";
 import type { Lockfile } from "./lockfile";
@@ -26,6 +27,7 @@ export interface ManagerOptions {
 }
 
 export class Manager {
+  public replaceSet = new Set<() => void>();
   public workspace: Record<string, Node> = Object.create(null);
   public packages: Record<string, Record<string, Node>> = Object.create(null);
   public resolutions: ReturnType<typeof formatResolutions>; // { 'react-dom': { react: '1.0.0' } }
@@ -48,16 +50,31 @@ export class Manager {
       for (const version in nodes) {
         const node = nodes[version];
         if (node !== target) {
-          for (const edge of node.usedEdges) {
-            if (this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
-              // TODO: If multiple versions are available,
-              // we will use the most used one,
-              // and if there are as many, we will use the higher version first.
-              edge.node = target;
-              target.usedEdges.add(edge);
-              node.usedEdges.delete(edge);
+          this.replaceSet.add(() => {
+            for (const edge of node.usedEdges) {
+              if (this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
+                const move = () => {
+                  edge.node = target;
+                  target.usedEdges.add(edge);
+                  node.usedEdges.delete(edge);
+                };
+
+                if (target.version === node.version) {
+                  // The old ones may be deleted, because of asynchronous requests,
+                  // nodes may be created repeatedly, and all are migrated to the same one here.
+                  move();
+                } else if (target.usedEdges.size > node.usedEdges.size) {
+                  // We choose the version that uses more
+                  move();
+                } else if (target.usedEdges.size === node.usedEdges.size) {
+                  // We choose the node with the higher version
+                  if (semver.gt(target.version, node.version)) {
+                    move();
+                  }
+                }
+              }
             }
-          }
+          });
         }
       }
     }

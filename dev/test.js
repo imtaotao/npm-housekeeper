@@ -34,14 +34,14 @@ install({
   console.timeEnd("install");
   globalThis.manager = manager;
 
-  // console.log('---------------');
-  // for (const v in manager.packages.react) {
-  //   for (const edge of manager.packages.react[v].usedEdges) {
-  //     console.log(
-  //       `react@${v}(wanted: ${edge.wanted}  ), parentProject is "${edge.parentNode.name}@${edge.parentNode.version}"`
-  //     );
-  //   }
-  // }
+  console.log("---------------");
+  for (const v in manager.packages.react) {
+    for (const edge of manager.packages.react[v].usedEdges) {
+      console.log(
+        `react@${v}(wanted: ${edge.wanted}, resolution: ${edge.resolution} ), parentProject is "${edge.parentNode.name}@${edge.parentNode.version}"`
+      );
+    }
+  }
 
   const setLockfile = () => {
     if (manager.hasError()) {
