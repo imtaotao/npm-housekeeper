@@ -119,6 +119,18 @@ install().then(manager => {
   const diffData = manager.lockfile.diff(lockData);
   console.log(diffData);
 })
+
+// When there is a network error, try again
+install({
+  ...,
+  retry: (name, times, next) => {
+    if (times > 5) return false;
+    console.log(`"${name}" retry times ${times}.`);
+    next(); // next request
+  },
+}).then(manager => {
+  // ...
+})
 ```
 
 
