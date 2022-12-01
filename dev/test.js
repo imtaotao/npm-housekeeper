@@ -4,14 +4,14 @@ install({
   workspace: {
     ".": {
       dependencies: {
-        // vue: "^2.7.12",
-        // "create-react-app": "latest",
+        vue: "^2.7.12",
+        "create-react-app": "latest",
         "@arco-design/web-react": "*",
       },
     },
     p1: {
       dependencies: {
-        // vue: "*",
+        vue: "*",
         react: "^15",
         p2: "workspace:*",
       },
@@ -20,7 +20,7 @@ install({
       name: "p2",
       dependencies: {
         react: "*",
-        // vue: "^2.7.13",
+        vue: "^2.7.13",
       },
     },
   },
