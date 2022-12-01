@@ -30,8 +30,8 @@ export interface ManagerOptions {
 export class Manager {
   public workspace: Record<string, Node> = Object.create(null);
   public packages: Record<string, Record<string, Node>> = Object.create(null);
-  private resolutions: ReturnType<typeof formatResolutions>; // { 'react-dom': { react: '1.0.0' } }
   private replaceSet = new Set<() => void>();
+  private resolutions: ReturnType<typeof formatResolutions>; // { 'react-dom': { react: '1.0.0' } }
   private manifests = new Map<string, PackageData | Promise<PackageData>>(); // { react: { '1.0.0': Node } }
 
   constructor(public opts: ManagerOptions) {
