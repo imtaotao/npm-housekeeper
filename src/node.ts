@@ -129,8 +129,8 @@ export class Node {
     }
   }
 
-  // TODO: The traversal needs to be sorted,
-  // otherwise it may not match the same version as in the lock file for `*`
+  // TODO: et all the package information first, 
+  // and then traverse the generation node synchronously
   loadDeps() {
     const ls = [];
     const {
