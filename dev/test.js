@@ -40,7 +40,7 @@ install({
   globalThis.manager = manager;
 
   console.log("---------------");
-  const pkgName = 'vue';
+  const pkgName = "vue";
   for (const v in manager.packages[pkgName]) {
     for (const edge of manager.packages[pkgName][v].usedEdges) {
       console.log(

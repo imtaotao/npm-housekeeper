@@ -60,7 +60,10 @@ export class Manager {
       const node = nodes[version];
       if (node === target) continue;
       for (const edge of node.usedEdges) {
-        if (target.version === node.version || this.satisfiedBy(target, edge.wanted, null, edge.accept)) {
+        if (
+          target.version === node.version ||
+          this.satisfiedBy(target, edge.wanted, null, edge.accept)
+        ) {
           edge.node = target;
           target.usedEdges.add(edge);
           node.usedEdges.delete(edge);
