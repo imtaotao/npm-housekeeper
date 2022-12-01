@@ -45,7 +45,8 @@ export class Manager {
   // For the generated nodes,
   // some of them may be replaced by the current node,
   // and the same one should be reused as much as possible
-  private tryReplace(target: Node) {
+  tryReplace(target: Node) {
+    if (target.isWorkspace()) return;
     const nodes = this.packages[target.name];
     if (!nodes) return;
 
@@ -158,12 +159,6 @@ export class Manager {
     return parent[depName].wanted;
   }
 
-  setResolution(parentName: string, depName: string, version: string) {
-    const parent = this.resolutions[parentName] || this.resolutions["**"];
-    if (!parent || !parent[depName]) return;
-    parent[depName].version = version;
-  }
-
   tryGetReusableNode(
     name: string,
     wanted: string,
@@ -199,7 +194,6 @@ export class Manager {
       if (!this.packages[node.name]) {
         this.packages[node.name] = Object.create(null);
       }
-      this.tryReplace(node);
       this.packages[node.name][node.version] = node;
     }
   }

@@ -65,7 +65,6 @@ const parseResolutionKey = (key: string) => {
 interface ResolutionValue {
   raw: string;
   wanted: string;
-  version: string;
 }
 
 export const formatResolutions = (resolutions: Record<string, string>) => {
@@ -77,7 +76,6 @@ export const formatResolutions = (resolutions: Record<string, string>) => {
     if (!obj[parentName]) obj[parentName] = Object.create(null);
     obj[parentName][depName] = {
       raw: key,
-      version: "",
       wanted: resolutions[key],
     };
   }
