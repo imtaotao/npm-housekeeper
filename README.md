@@ -123,10 +123,12 @@ install().then(manager => {
 // When there is a network error, try again
 install({
   ...,
-  retry: (name, times, next) => {
+  retry: (err, name, times, next) => {
     if (times < 5) {
       console.log(`"${name}" retry times ${times}.`);
-      next(); // next request
+      next(); // Next request
+    } else {
+      throw err; // Must throw an error
     }
   },
 }).then(manager => {
