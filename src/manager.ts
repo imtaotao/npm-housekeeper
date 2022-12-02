@@ -1,9 +1,9 @@
 import { gpi, RetryType, PackageData } from "gpi";
 import { depValid } from "./depValid";
-import { cropEmptyNodes } from "./cropPkgs";
 import type { Lockfile } from "./lockfile";
+import { cropEmptyNodes } from "./cropPkgs";
 import { EdgeType, Node, WorkspaceJson } from "./node";
-import { isWs, getWsWanted, createDefer, formatResolutions } from "./utils";
+import { isWs, getWsWanted, formatResolutions } from "./utils";
 
 type EachCallback = (
   pkgName: string,
