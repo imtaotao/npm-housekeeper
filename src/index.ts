@@ -1,6 +1,7 @@
+import type { RetryType } from "gpi";
 import type { NodePkgJson, WorkspaceJson } from "./node";
+import { Manager, FilterType } from "./manager";
 import { Lockfile, LockfileJson } from "./lockfile";
-import { Manager, FilterType, RetryType } from "./manager";
 
 export interface InstallOptions {
   registry?: string;

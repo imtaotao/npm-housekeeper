@@ -129,7 +129,7 @@ export class Node {
     }
   }
 
-  // TODO: et all the package information first, 
+  // TODO: et all the package information first,
   // and then traverse the generation node synchronously
   loadDeps() {
     const ls = [];

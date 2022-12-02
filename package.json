@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "esm-semver": "^0.0.9",
-    "gpi": "^0.0.6"
+    "gpi": "^1.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",

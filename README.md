@@ -124,9 +124,10 @@ install().then(manager => {
 install({
   ...,
   retry: (name, times, next) => {
-    if (times > 5) return false;
-    console.log(`"${name}" retry times ${times}.`);
-    next(); // next request
+    if (times < 5) {
+      console.log(`"${name}" retry times ${times}.`);
+      next(); // next request
+    }
   },
 }).then(manager => {
   // ...
