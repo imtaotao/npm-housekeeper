@@ -1,6 +1,8 @@
 .vscode/
 node_modules/
 dist/
+npmTest/
+yarnTest/
 .DS_Store
 yarn.lock
 yarn-error.log

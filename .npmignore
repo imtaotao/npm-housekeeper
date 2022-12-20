@@ -2,6 +2,8 @@
 dev/
 node_modules/
 src/
+npmTest/
+yarnTest/
 .DS_Store
 .gitignore
 .npmignore
