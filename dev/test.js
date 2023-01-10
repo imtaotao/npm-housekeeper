@@ -65,7 +65,7 @@ install({
   };
   setLockfile();
 
-  const expressNode = await manager.get(".").add("express");
+  // const expressNode = await manager.get(".").add("express");
   // console.log(expressNode);
   setLockfile();
 
