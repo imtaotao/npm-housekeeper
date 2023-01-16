@@ -1,3 +1,11 @@
+// 当有一个 wanted 有多个可以复用的包版本时的几个原则
+// 1. 选择复用次数多的，尽量保证复用同一份
+// 2. 当有次数一样的包时，选择高版本的
+// 这样的前提是，需要同步的进行，这会导致 fetch 资源是一个一个进行的，会很慢。
+// 可以选择的方向是
+// 1. 提前 fetch 所有的包信息
+// 2. 然后重新遍历一遍，生成最终的 data
+
 import type { RetryType } from "gpi";
 import type { NodePkgJson, WorkspaceJson } from "./node";
 import { Manager, FilterType } from "./manager";
