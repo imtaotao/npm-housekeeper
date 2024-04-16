@@ -1,7 +1,7 @@
 import { install } from "../index";
 
 describe("test", () => {
-  it('install', async () => {
+  it("install", async () => {
     const manager = await install({
       customFetch: require("node-fetch"),
       workspace: {
@@ -16,9 +16,9 @@ describe("test", () => {
           },
         },
       },
-    })
+    });
     const lockData = manager.lockfile.output();
     console.log(lockData);
     expect(manager.hasError()).toBe(false);
-  })
+  });
 });
